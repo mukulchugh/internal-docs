@@ -85,6 +85,7 @@ export const PACKAGES: PackageMeta[] = [
   { id: 'ui-kit', name: '@quivly/ui-kit', version: '2.4.0', status: 'prod', description: 'Core design system and component library.' },
   { id: 'flow', name: '@quivly/flow', version: '1.1.0', status: 'prod', description: 'Workflow automation engine.' },
   { id: 'data-grid', name: '@quivly/data-grid', version: '0.1.0-alpha', status: 'proposed', description: 'Enterprise data table with TanStack Table, virtualization, inline editing, and CRM-grade features.' },
+  { id: 'dashboard-widgets', name: '@quivly/dashboards', version: '1.0.0-alpha', status: 'proposed', description: 'Customizable dashboard system with drag-drop page layouts, 15+ widget types, and advanced data visualization with Nivo charts.' },
 ];
 
 // --- Mermaid Charts ---
@@ -157,6 +158,119 @@ const DATA_GRID_DATA_FLOW = `flowchart LR
   Virtualizer --> VirtualItems
   VirtualItems --> VisibleRows
   ColumnModel --> Cells`;
+
+const DASHBOARD_ARCH_CHART = `flowchart TB
+  subgraph App["Your Application"]
+    Consumer["Dashboard Page"]
+  end
+  subgraph Package["@quivly/dashboards"]
+    subgraph Core["Core Layer"]
+      PageLayoutRenderer["PageLayoutRenderer"]
+      StateProvider["Zustand Store"]
+      GridSystem["react-grid-layout"]
+    end
+    subgraph LayoutSystem["Layout System"]
+      GridLayout["GridLayout (12-col)"]
+      VerticalList["VerticalListLayout"]
+      Canvas["CanvasLayout"]
+      TabSystem["Tab Management"]
+    end
+    subgraph Widgets["Widget System (15 Types)"]
+      GraphWidget["GraphWidget (Charts)"]
+      IframeWidget["IframeWidget"]
+      FieldsWidget["FieldsWidget"]
+      TimelineWidget["TimelineWidget"]
+      TasksWidget["TasksWidget"]
+      MoreWidgets["...10+ more"]
+    end
+    subgraph ChartSystem["Chart System (Nivo)"]
+      BarChart["Bar Chart"]
+      LineChart["Line Chart"]
+      PieChart["Pie Chart"]
+      GaugeChart["Gauge Chart"]
+      AggregateChart["Aggregate Chart"]
+    end
+  end
+  subgraph Backend["Backend (tRPC + Supabase)"]
+    API["tRPC Router"]
+    DB["PostgreSQL"]
+    RLS["Row Level Security"]
+  end
+  Consumer --> PageLayoutRenderer
+  PageLayoutRenderer --> StateProvider
+  StateProvider --> Core
+  Core --> LayoutSystem
+  LayoutSystem --> Widgets
+  Widgets --> ChartSystem
+  StateProvider --> API
+  API --> DB
+  DB --> RLS`;
+
+const DASHBOARD_DATA_FLOW = `flowchart LR
+  subgraph UI["User Interface"]
+    EditMode["Edit Mode"]
+    ViewMode["View Mode"]
+    Settings["Widget Settings"]
+  end
+  subgraph State["Zustand State"]
+    Draft["Draft Layout"]
+    Persisted["Persisted Layout"]
+    Widgets["Widgets Array"]
+  end
+  subgraph API["tRPC API"]
+    GetLayout["getPageLayout"]
+    SaveLayout["updatePageLayout"]
+    ChartData["chartDataQuery"]
+  end
+  subgraph DB["Supabase DB"]
+    LayoutTable["page_layouts"]
+    TabsTable["page_layout_tabs"]
+    WidgetsTable["page_layout_widgets"]
+  end
+  ViewMode --> Persisted
+  EditMode --> Draft
+  Draft --> Settings
+  Settings --> Draft
+  Draft --> SaveLayout
+  GetLayout --> Persisted
+  SaveLayout --> LayoutTable
+  LayoutTable --> TabsTable
+  TabsTable --> WidgetsTable
+  ChartData --> WidgetsTable
+  Persisted --> ViewMode`;
+
+const WIDGET_SYSTEM_CHART = `flowchart TB
+  subgraph WidgetTypes["Widget Types (15)"]
+    GRAPH["GRAPH - Data visualization"]
+    VIEW["VIEW - Data tables"]
+    IFRAME["IFRAME - Embedded content"]
+    FIELDS["FIELDS - Object fields"]
+    TIMELINE["TIMELINE - Activity feed"]
+    TASKS["TASKS - Task list"]
+    NOTES["NOTES - Notes display"]
+    FILES["FILES - File attachments"]
+    EMAILS["EMAILS - Email threads"]
+    CALENDAR["CALENDAR - Calendar view"]
+    RICH_TEXT["RICH_TEXT - Rich editor"]
+    WORKFLOW["WORKFLOW - Workflow display"]
+  end
+  subgraph ChartTypes["Chart Types (6)"]
+    VERTICAL_BAR["VERTICAL_BAR"]
+    HORIZONTAL_BAR["HORIZONTAL_BAR"]
+    LINE["LINE"]
+    PIE["PIE"]
+    GAUGE["GAUGE"]
+    AGGREGATE["AGGREGATE"]
+  end
+  subgraph Config["Widget Configuration"]
+    GridPosition["Grid Position"]
+    ChartConfig["Chart Configuration"]
+    FilterConfig["Filter Configuration"]
+    DisplayRules["Conditional Display"]
+  end
+  GRAPH --> ChartTypes
+  ChartTypes --> Config
+  WidgetTypes --> Config`;
 
 // --- File Trees ---
 
@@ -306,6 +420,145 @@ const DATA_GRID_FIELDS_TREE: FileNode = {
       ]
     },
     { name: "package.json", type: "file" },
+  ]
+};
+
+const DASHBOARD_FILE_TREE: FileNode = {
+  name: "@quivly/dashboards",
+  type: "folder",
+  children: [
+    {
+      name: "src",
+      type: "folder",
+      children: [
+        {
+          name: "core",
+          type: "folder",
+          children: [
+            { name: "PageLayoutRenderer.tsx", type: "component", comment: "Main entry point" },
+            { name: "PageLayoutContent.tsx", type: "component", comment: "Layout mode router" },
+            { name: "GridLayout.tsx", type: "component", comment: "12-column grid" },
+            { name: "VerticalListLayout.tsx", type: "component", comment: "Stacked layout" },
+            { name: "CanvasLayout.tsx", type: "component", comment: "Single widget" },
+            { name: "TabList.tsx", type: "component", comment: "Tab management" },
+          ]
+        },
+        {
+          name: "widgets",
+          type: "folder",
+          children: [
+            {
+              name: "graph",
+              type: "folder",
+              children: [
+                { name: "GraphWidget.tsx", type: "component", comment: "Chart router" },
+                { name: "BarChartRenderer.tsx", type: "component" },
+                { name: "LineChartRenderer.tsx", type: "component" },
+                { name: "PieChartRenderer.tsx", type: "component" },
+                { name: "GaugeChartRenderer.tsx", type: "component" },
+                { name: "AggregateChartRenderer.tsx", type: "component" },
+                { name: "useChartData.ts", type: "hook", comment: "Data fetching" },
+                { name: "transformChartData.ts", type: "file", comment: "Data pipeline" },
+              ]
+            },
+            { name: "IframeWidget.tsx", type: "component" },
+            { name: "FieldsWidget.tsx", type: "component" },
+            { name: "TimelineWidget.tsx", type: "component" },
+            { name: "TasksWidget.tsx", type: "component" },
+            { name: "NotesWidget.tsx", type: "component" },
+            { name: "FilesWidget.tsx", type: "component" },
+            { name: "EmailsWidget.tsx", type: "component" },
+            { name: "CalendarWidget.tsx", type: "component" },
+            { name: "RichTextWidget.tsx", type: "component" },
+            { name: "WorkflowWidget.tsx", type: "component" },
+            { name: "WidgetRenderer.tsx", type: "component", comment: "Type router" },
+            { name: "WidgetCard.tsx", type: "component", comment: "Wrapper" },
+          ]
+        },
+        {
+          name: "settings",
+          type: "folder",
+          children: [
+            { name: "ChartSettingsModal.tsx", type: "component" },
+            { name: "ChartTypeSelector.tsx", type: "component" },
+            { name: "ChartConfigForm.tsx", type: "component" },
+            { name: "FilterBuilder.tsx", type: "component" },
+            { name: "WidgetSettingsPanel.tsx", type: "component" },
+          ]
+        },
+        {
+          name: "stores",
+          type: "folder",
+          children: [
+            { name: "pageLayoutStore.ts", type: "file", comment: "Zustand store" },
+            { name: "widgetStore.ts", type: "file" },
+            { name: "chartDataStore.ts", type: "file" },
+          ]
+        },
+        {
+          name: "hooks",
+          type: "folder",
+          children: [
+            { name: "usePageLayout.ts", type: "hook" },
+            { name: "useSavePageLayout.ts", type: "hook" },
+            { name: "useCreateWidget.ts", type: "hook" },
+            { name: "useUpdateWidget.ts", type: "hook" },
+            { name: "useDeleteWidget.ts", type: "hook" },
+            { name: "useChartData.ts", type: "hook", comment: "Chart queries" },
+          ]
+        },
+        {
+          name: "types",
+          type: "folder",
+          children: [
+            { name: "PageLayout.ts", type: "file" },
+            { name: "Widget.ts", type: "file" },
+            { name: "ChartConfiguration.ts", type: "file" },
+            { name: "GridPosition.ts", type: "file" },
+          ]
+        },
+        {
+          name: "utils",
+          type: "folder",
+          children: [
+            { name: "transformChartData.ts", type: "file", comment: "Data transformation" },
+            { name: "formatters.ts", type: "file", comment: "Value formatting" },
+            { name: "colorSchemes.ts", type: "file", comment: "24 presets" },
+            { name: "gridHelpers.ts", type: "file", comment: "Grid calculations" },
+          ]
+        },
+        { name: "index.ts", type: "file", comment: "Public exports" },
+      ]
+    },
+    { name: "package.json", type: "file" },
+  ]
+};
+
+const DASHBOARD_BACKEND_TREE: FileNode = {
+  name: "supabase",
+  type: "folder",
+  children: [
+    {
+      name: "migrations",
+      type: "folder",
+      children: [
+        { name: "001_page_layouts.sql", type: "file", comment: "Schema" },
+        { name: "002_rls_policies.sql", type: "file", comment: "Security" },
+        { name: "003_functions.sql", type: "file", comment: "Helpers" },
+      ]
+    },
+    {
+      name: "functions",
+      type: "folder",
+      children: [
+        { name: "update-page-layout-bulk", type: "folder", comment: "Edge function" },
+      ]
+    },
+    {
+      name: "seed.sql",
+      type: "file",
+      comment: "Demo data"
+    },
   ]
 };
 
@@ -2859,6 +3112,1185 @@ export function DataGrid<TData>({
   );
 }`} />
           </StyleSection>
+        </>
+      )
+    }
+  },
+
+  // ============================================
+  // @quivly/dashboards - MAIN DOCUMENTATION
+  // ============================================
+  'dashboard-widgets': {
+    overview: {
+      title: "Overview",
+      content: (
+        <>
+          <div className="mb-8 p-6 bg-white border border-border rounded-sm">
+            <p className="text-base text-zinc-700 leading-relaxed font-sans">
+              <strong className="font-mono text-zinc-900 font-bold">@quivly/dashboards</strong> is a production-ready, customizable dashboard system built for modern web applications. Provides drag-and-drop page layouts, 15+ widget types, advanced data visualization with Nivo charts, and seamless integration with Next.js + Supabase.
+            </p>
+          </div>
+
+          {/* Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <StatCard value="15+" label="Widget Types" />
+            <StatCard value="6" label="Chart Types" />
+            <StatCard value="3" label="Layout Modes" />
+            <StatCard value="24" label="Color Schemes" />
+          </div>
+
+          {/* Core Features */}
+          <h3 className="text-lg font-bold text-zinc-900 font-mono mb-4 flex items-center gap-2">
+            <Zap size={18} /> Core Features
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <FeatureCard
+              icon={<Layout size={20} />}
+              title="3 Layout Modes"
+              desc="Grid (12-col), vertical list, and canvas modes for flexible page layouts."
+            />
+            <FeatureCard
+              icon={<Move size={20} />}
+              title="Drag & Drop"
+              desc="Full drag-drop support via react-grid-layout with live updates."
+            />
+            <FeatureCard
+              icon={<BarChart3 size={20} />}
+              title="Advanced Charts"
+              desc="6 chart types with Nivo: Bar, Line, Pie, Gauge, Aggregate."
+            />
+            <FeatureCard
+              icon={<Layers size={20} />}
+              title="15+ Widgets"
+              desc="Charts, iframes, fields, timeline, tasks, notes, files, calendar, and more."
+            />
+            <FeatureCard
+              icon={<Database size={20} />}
+              title="Data Aggregation"
+              desc="13 aggregate operations: SUM, AVG, MIN, MAX, COUNT, PERCENTAGE, etc."
+            />
+            <FeatureCard
+              icon={<Paintbrush size={20} />}
+              title="Theming"
+              desc="24 color schemes, customizable palettes, gradients for visualizations."
+            />
+            <FeatureCard
+              icon={<Eye size={20} />}
+              title="Conditional Display"
+              desc="JSON Logic rules for dynamic widget visibility based on context."
+            />
+            <FeatureCard
+              icon={<Server size={20} />}
+              title="Supabase Ready"
+              desc="Built for Supabase with RLS policies, Edge Functions, real-time updates."
+            />
+          </div>
+
+          {/* Widget Types */}
+          <h3 className="text-lg font-bold text-zinc-900 font-mono mb-4">Widget Types (15)</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div>
+              <h4 className="font-bold text-zinc-900 text-sm mb-3">Data & Visualization</h4>
+              <FeatureList items={[
+                "GRAPH - 6 chart types with advanced configurations",
+                "VIEW - Data table/list display",
+                "FIELDS - Object field display",
+                "TIMELINE - Activity timeline",
+                "CALENDAR - Calendar view",
+              ]} />
+            </div>
+            <div>
+              <h4 className="font-bold text-zinc-900 text-sm mb-3">Content & Productivity</h4>
+              <FeatureList items={[
+                "IFRAME - Embedded external content",
+                "TASKS - Task management widget",
+                "NOTES - Notes display",
+                "FILES - File attachments",
+                "EMAILS - Email threads",
+                "RICH_TEXT - Rich text editor",
+                "WORKFLOW - Workflow display",
+              ]} />
+            </div>
+          </div>
+
+          {/* Chart Types */}
+          <h3 className="text-lg font-bold text-zinc-900 font-mono mb-4">Chart Types (6)</h3>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+            <div className="bg-white p-3 border border-border rounded-sm">
+              <h4 className="font-mono font-bold text-xs mb-1">VERTICAL_BAR</h4>
+              <p className="text-[10px] text-zinc-500">1D/2D grouping, stacked/grouped, max 50 bars</p>
+            </div>
+            <div className="bg-white p-3 border border-border rounded-sm">
+              <h4 className="font-mono font-bold text-xs mb-1">HORIZONTAL_BAR</h4>
+              <p className="text-[10px] text-zinc-500">Same as vertical, horizontal orientation</p>
+            </div>
+            <div className="bg-white p-3 border border-border rounded-sm">
+              <h4 className="font-mono font-bold text-xs mb-1">LINE</h4>
+              <p className="text-[10px] text-zinc-500">Time-series, stacked/multi-line, max 50 points</p>
+            </div>
+            <div className="bg-white p-3 border border-border rounded-sm">
+              <h4 className="font-mono font-bold text-xs mb-1">PIE</h4>
+              <p className="text-[10px] text-zinc-500">Donut style, max 50 slices, percentages</p>
+            </div>
+            <div className="bg-white p-3 border border-border rounded-sm">
+              <h4 className="font-mono font-bold text-xs mb-1">GAUGE</h4>
+              <p className="text-[10px] text-zinc-500">Semi-circle gauge, single metric</p>
+            </div>
+            <div className="bg-white p-3 border border-border rounded-sm">
+              <h4 className="font-mono font-bold text-xs mb-1">AGGREGATE</h4>
+              <p className="text-[10px] text-zinc-500">Large number display with trend indicator</p>
+            </div>
+          </div>
+
+          {/* Dependencies */}
+          <div className="bg-zinc-900 text-zinc-100 p-6 rounded-sm">
+            <h4 className="font-mono font-bold text-xs uppercase tracking-widest text-zinc-400 mb-4">Dependencies</h4>
+            <CodeBlock language="json" code={`{
+  "name": "@quivly/dashboards",
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0",
+    "next": ">=14.0.0"
+  },
+  "dependencies": {
+    "@nivo/bar": "^0.99.0",
+    "@nivo/line": "^0.99.0",
+    "@nivo/pie": "^0.99.0",
+    "@nivo/radial-bar": "^0.99.0",
+    "@nivo/core": "^0.99.0",
+    "react-grid-layout": "^1.5.2",
+    "zustand": "^5.0.0",
+    "@trpc/client": "^11.0.0",
+    "@trpc/react-query": "^11.0.0",
+    "@tanstack/react-query": "^5.0.0",
+    "@floating-ui/react": "^0.24.0",
+    "date-fns": "^2.30.0",
+    "json-logic-js": "^2.0.5",
+    "zod": "^3.22.0"
+  }
+}`} />
+          </div>
+        </>
+      )
+    },
+
+    architecture: {
+      title: "Architecture",
+      content: (
+        <>
+          {/* High-Level Architecture */}
+          <h3 className="text-lg font-bold text-zinc-900 font-mono mb-4 flex items-center gap-2">
+            <Cpu size={18} /> System Architecture
+          </h3>
+          <div className="bg-white border border-border p-1 rounded-sm mb-8">
+            <Mermaid chart={DASHBOARD_ARCH_CHART} />
+          </div>
+
+          {/* Data Flow */}
+          <h3 className="text-lg font-bold text-zinc-900 font-mono mb-4 flex items-center gap-2">
+            <Share2 size={18} /> Data Flow
+          </h3>
+          <div className="bg-white border border-border p-1 rounded-sm mb-8">
+            <Mermaid chart={DASHBOARD_DATA_FLOW} />
+          </div>
+
+          {/* Widget System */}
+          <h3 className="text-lg font-bold text-zinc-900 font-mono mb-4 flex items-center gap-2">
+            <Layers size={18} /> Widget System
+          </h3>
+          <div className="bg-white border border-border p-1 rounded-sm mb-8">
+            <Mermaid chart={WIDGET_SYSTEM_CHART} />
+          </div>
+
+          {/* Architecture Explanation */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <div>
+              <h3 className="text-lg font-bold text-zinc-900 font-mono mb-4 flex items-center gap-2">
+                <Box size={18} /> System Design
+              </h3>
+              <p className="text-zinc-600 mb-4 text-sm leading-relaxed">
+                The architecture is built around a flexible page layout system with three rendering modes.
+                State management uses Zustand for simplicity and Next.js compatibility, while tRPC provides
+                type-safe API communication with Supabase.
+              </p>
+              <ul className="list-disc pl-4 space-y-2 text-sm text-zinc-600 marker:text-zinc-400">
+                <li><strong>Core Layer:</strong> PageLayoutRenderer manages layout state and coordinates widget rendering.</li>
+                <li><strong>State Management:</strong> Zustand store with draft/persisted pattern for edit mode rollback.</li>
+                <li><strong>Layout Modes:</strong> Grid (12-col), Vertical List, and Canvas for different use cases.</li>
+                <li><strong>Widget System:</strong> Pluggable architecture with type-based routing and configuration.</li>
+                <li><strong>Backend:</strong> tRPC + Supabase with RLS for security, Edge Functions for complex operations.</li>
+              </ul>
+            </div>
+            <FileTree data={DASHBOARD_FILE_TREE} />
+          </div>
+
+          {/* Backend Architecture */}
+          <h3 className="text-lg font-bold text-zinc-900 font-mono mb-4 flex items-center gap-2">
+            <Database size={18} /> Backend (Supabase)
+          </h3>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <div>
+              <p className="text-zinc-600 mb-4 text-sm leading-relaxed">
+                The backend uses Supabase PostgreSQL with Row-Level Security (RLS) for multi-tenant isolation.
+                Edge Functions handle complex bulk updates, while tRPC provides type-safe API routes.
+              </p>
+              <h4 className="font-bold text-zinc-900 text-sm mb-3">Database Tables</h4>
+              <div className="space-y-2 text-xs">
+                <div className="bg-zinc-50 p-2 rounded border border-border">
+                  <code className="font-bold">page_layouts</code> - Main layout entity
+                </div>
+                <div className="bg-zinc-50 p-2 rounded border border-border">
+                  <code className="font-bold">page_layout_tabs</code> - Tabs (CASCADE delete)
+                </div>
+                <div className="bg-zinc-50 p-2 rounded border border-border">
+                  <code className="font-bold">page_layout_widgets</code> - Widgets (CASCADE delete)
+                </div>
+              </div>
+            </div>
+            <FileTree data={DASHBOARD_BACKEND_TREE} />
+          </div>
+
+          {/* Layout Modes */}
+          <h3 className="text-lg font-bold text-zinc-900 font-mono mb-4 flex items-center gap-2">
+            <Layout size={18} /> Layout Modes
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div className="bg-white p-4 border border-border rounded-sm">
+              <h4 className="font-mono font-bold text-sm mb-2">Grid Mode</h4>
+              <p className="text-xs text-zinc-600 mb-3">12-column responsive grid with drag-drop positioning.</p>
+              <div className="text-[10px] space-y-1">
+                <div className="flex justify-between"><span>Columns:</span><code>12 (desktop), 1 (mobile)</code></div>
+                <div className="flex justify-between"><span>Row Height:</span><code>55px</code></div>
+                <div className="flex justify-between"><span>Max Rows:</span><code>100</code></div>
+                <div className="flex justify-between"><span>Drag/Resize:</span><Badge variant="success">Yes</Badge></div>
+              </div>
+            </div>
+            <div className="bg-white p-4 border border-border rounded-sm">
+              <h4 className="font-mono font-bold text-sm mb-2">Vertical List</h4>
+              <p className="text-xs text-zinc-600 mb-3">Simple vertical stacking for linear layouts.</p>
+              <div className="text-[10px] space-y-1">
+                <div className="flex justify-between"><span>Columns:</span><code>1</code></div>
+                <div className="flex justify-between"><span>Spacing:</span><code>16px gap</code></div>
+                <div className="flex justify-between"><span>Reorder:</span><Badge variant="success">Yes</Badge></div>
+                <div className="flex justify-between"><span>Use Case:</span><code>Record pages</code></div>
+              </div>
+            </div>
+            <div className="bg-white p-4 border border-border rounded-sm">
+              <h4 className="font-mono font-bold text-sm mb-2">Canvas Mode</h4>
+              <p className="text-xs text-zinc-600 mb-3">Single fullscreen widget display.</p>
+              <div className="text-[10px] space-y-1">
+                <div className="flex justify-between"><span>Widgets:</span><code>1 (first widget)</code></div>
+                <div className="flex justify-between"><span>Chrome:</span><Badge variant="outline">None</Badge></div>
+                <div className="flex justify-between"><span>Fullscreen:</span><Badge variant="success">Yes</Badge></div>
+                <div className="flex justify-between"><span>Use Case:</span><code>Focus view</code></div>
+              </div>
+            </div>
+          </div>
+
+          {/* State Management */}
+          <h3 className="text-lg font-bold text-zinc-900 font-mono mb-4 flex items-center gap-2">
+            <Database size={18} /> State Management
+          </h3>
+          <div className="bg-zinc-50 border border-border p-4 rounded-sm mb-8">
+            <p className="text-sm text-zinc-600 mb-4">
+              Uses <strong>Zustand</strong> for state management with a <strong>draft/persisted pattern</strong> for safe editing:
+            </p>
+            <CodeBlock language="typescript" code={`interface PageLayoutStore {
+  // State
+  persistedLayout: PageLayout | null    // Server data (read-only)
+  draftLayout: DraftPageLayout | null   // Local edits (editable)
+  currentLayouts: TabLayouts            // react-grid-layout format
+  isEditMode: boolean                   // Edit toggle
+  editingWidgetId: string | null        // Currently editing
+
+  // Actions
+  enterEditMode: () => void             // Copy persisted → draft
+  exitEditMode: () => void              // Discard draft
+  updateWidget: (id, updates) => void   // Modify widget in draft
+  saveLayout: () => Promise<void>       // Save draft → server
+  resetDraft: () => void                // Reset to persisted
+}`} />
+          </div>
+        </>
+      )
+    },
+
+    api: {
+      title: "API Reference",
+      content: (
+        <>
+          {/* tRPC Router */}
+          <h3 className="text-lg font-bold text-zinc-900 font-mono mb-4 flex items-center gap-2">
+            <Terminal size={18} /> tRPC Router
+          </h3>
+
+          <ApiSection
+            name="pageLayout.getAll"
+            type="query"
+            description="Fetch all page layouts for a workspace"
+          >
+            <CodeBlock language="typescript" code={`// Input
+const input = z.object({
+  workspaceId: z.string().uuid()
+})
+
+// Usage
+const { data, isLoading } = trpc.pageLayout.getAll.useQuery({
+  workspaceId: '...'
+})
+
+// Returns
+type PageLayout[] = {
+  id: string
+  name: string
+  type: 'DASHBOARD' | 'RECORD_PAGE' | 'RECORD_INDEX'
+  objectMetadataId?: string
+  tabs: {
+    id: string
+    title: string
+    position: number
+    widgets: Widget[]
+  }[]
+  createdAt: Date
+  updatedAt: Date
+}`} />
+          </ApiSection>
+
+          <ApiSection
+            name="pageLayout.getById"
+            type="query"
+            description="Fetch single page layout with all tabs and widgets"
+          >
+            <CodeBlock language="typescript" code={`// Input
+const input = z.object({
+  id: z.string().uuid(),
+  workspaceId: z.string().uuid()
+})
+
+// Usage
+const { data } = trpc.pageLayout.getById.useQuery({
+  id: 'layout-id',
+  workspaceId: 'workspace-id'
+})`} />
+          </ApiSection>
+
+          <ApiSection
+            name="pageLayout.create"
+            type="mutation"
+            description="Create new page layout with initial tab"
+          >
+            <CodeBlock language="typescript" code={`// Input
+const input = z.object({
+  workspaceId: z.string().uuid(),
+  name: z.string(),
+  type: z.enum(['DASHBOARD', 'RECORD_PAGE', 'RECORD_INDEX']),
+  objectMetadataId: z.string().uuid().optional()
+})
+
+// Usage
+const mutation = trpc.pageLayout.create.useMutation()
+await mutation.mutateAsync({
+  workspaceId: '...',
+  name: 'My Dashboard',
+  type: 'DASHBOARD'
+})`} />
+          </ApiSection>
+
+          <ApiSection
+            name="pageLayout.updateWithTabsAndWidgets"
+            type="mutation"
+            description="Atomic bulk update of entire layout (tabs + widgets)"
+          >
+            <CodeBlock language="typescript" code={`// Input (complex)
+const input = z.object({
+  id: z.string().uuid(),
+  workspaceId: z.string().uuid(),
+  name: z.string().optional(),
+  tabs: z.array(z.object({
+    id: z.string().uuid().optional(),  // Omit for create
+    title: z.string(),
+    position: z.number(),
+    widgets: z.array(z.object({
+      id: z.string().uuid().optional(),
+      title: z.string(),
+      type: z.enum(['GRAPH', 'IFRAME', 'FIELDS', /*...*/]),
+      gridPosition: z.object({
+        row: z.number(),
+        column: z.number(),
+        rowSpan: z.number(),
+        columnSpan: z.number()
+      }),
+      configuration: z.record(z.any()).optional()
+    }))
+  }))
+})
+
+// Usage
+const mutation = trpc.pageLayout.updateWithTabsAndWidgets.useMutation()
+await mutation.mutateAsync({
+  id: 'layout-id',
+  workspaceId: 'workspace-id',
+  name: 'Updated Dashboard',
+  tabs: [
+    {
+      id: 'existing-tab-id',  // Update existing
+      title: 'Analytics',
+      position: 0,
+      widgets: [/* ... */]
+    },
+    {
+      // No id = create new tab
+      title: 'New Tab',
+      position: 1,
+      widgets: []
+    }
+  ]
+})`} />
+          </ApiSection>
+
+          <ApiSection
+            name="pageLayout.delete"
+            type="mutation"
+            description="Soft delete page layout (sets deletedAt timestamp)"
+          >
+            <CodeBlock language="typescript" code={`// Input
+const input = z.object({
+  id: z.string().uuid(),
+  workspaceId: z.string().uuid()
+})
+
+// Usage
+await trpc.pageLayout.delete.mutateAsync({
+  id: 'layout-id',
+  workspaceId: 'workspace-id'
+})`} />
+          </ApiSection>
+
+          {/* Widget API */}
+          <h3 className="text-lg font-bold text-zinc-900 font-mono mb-4 mt-8 flex items-center gap-2">
+            <Code size={18} /> Widget API
+          </h3>
+
+          <ApiSection
+            name="widget.create"
+            type="mutation"
+            description="Create widget in a tab"
+          >
+            <CodeBlock language="typescript" code={`// Input
+const input = z.object({
+  pageLayoutTabId: z.string().uuid(),
+  workspaceId: z.string().uuid(),
+  title: z.string(),
+  type: z.enum([/* 15 widget types */]),
+  objectMetadataId: z.string().uuid().optional(),
+  gridPosition: z.object({
+    row: z.number(),
+    column: z.number(),
+    rowSpan: z.number(),
+    columnSpan: z.number()
+  }),
+  configuration: z.record(z.any()).optional()
+})
+
+// Example: Create bar chart widget
+await trpc.widget.create.mutateAsync({
+  pageLayoutTabId: 'tab-id',
+  workspaceId: 'workspace-id',
+  title: 'Opportunities by Stage',
+  type: 'GRAPH',
+  gridPosition: { row: 0, column: 0, rowSpan: 6, columnSpan: 6 },
+  configuration: {
+    graphType: 'VERTICAL_BAR',
+    aggregateFieldMetadataId: 'amount-field-id',
+    aggregateOperation: 'SUM',
+    primaryAxisGroupByFieldMetadataId: 'stage-field-id',
+    color: 'blue'
+  }
+})`} />
+          </ApiSection>
+
+          {/* Chart Data API */}
+          <h3 className="text-lg font-bold text-zinc-900 font-mono mb-4 mt-8 flex items-center gap-2">
+            <BarChart3 size={18} /> Chart Data API
+          </h3>
+
+          <ApiSection
+            name="records.groupBy"
+            type="query"
+            description="Fetch aggregated data for charts"
+          >
+            <CodeBlock language="typescript" code={`// Input
+const input = z.object({
+  objectMetadataId: z.string().uuid(),
+  groupBy: z.array(z.object({
+    fieldName: z.string(),
+    dateGranularity: z.enum(['DAY', 'WEEK', 'MONTH', 'QUARTER', 'YEAR']).optional()
+  })),
+  aggregateOperation: z.enum(['SUM', 'AVG', 'COUNT', 'MIN', 'MAX', /*...*/]),
+  filter: z.record(z.any()).optional(),
+  orderBy: z.object({
+    field: z.string(),
+    direction: z.enum(['ASC', 'DESC'])
+  }).optional(),
+  limit: z.number().default(50)
+})
+
+// Usage for bar chart
+const { data } = trpc.records.groupBy.useQuery({
+  objectMetadataId: 'opportunity-object-id',
+  groupBy: [
+    { fieldName: 'createdAt', dateGranularity: 'MONTH' },
+    { fieldName: 'stage' }
+  ],
+  aggregateOperation: 'SUM',
+  filter: { status: { eq: 'active' } },
+  limit: 50
+})
+
+// Returns
+{
+  results: [
+    {
+      groupByDimensionValues: ['2024-01', 'Qualified'],
+      aggregateValue: 125000
+    },
+    // ... more results
+  ]
+}`} />
+          </ApiSection>
+        </>
+      )
+    },
+
+    hooks: {
+      title: "Hooks Reference",
+      content: (
+        <>
+          <h3 className="text-lg font-bold text-zinc-900 font-mono mb-4">Core Hooks</h3>
+
+          <ApiSection
+            name="usePageLayout"
+            type="hook"
+            description="Fetch and initialize page layout"
+          >
+            <CodeBlock language="typescript" code={`import { usePageLayout } from '@quivly/dashboards'
+
+function DashboardPage({ layoutId }) {
+  const {
+    data,           // PageLayout | null
+    isLoading,      // boolean
+    error,          // Error | null
+    refetch         // () => Promise<void>
+  } = usePageLayout(layoutId, workspaceId)
+
+  if (isLoading) return <LoadingSpinner />
+  if (error) return <ErrorDisplay error={error} />
+
+  return <PageLayoutRenderer initialData={data} />
+}`} />
+          </ApiSection>
+
+          <ApiSection
+            name="useSavePageLayout"
+            type="hook"
+            description="Save draft layout to server"
+          >
+            <CodeBlock language="typescript" code={`import { useSavePageLayout, usePageLayoutStore } from '@quivly/dashboards'
+
+function EditToolbar({ layoutId }) {
+  const draftLayout = usePageLayoutStore(s => s.draftLayout)
+  const { save, isLoading, error } = useSavePageLayout(layoutId, workspaceId)
+
+  const handleSave = async () => {
+    await save()
+    // Success: draft → persisted, exits edit mode
+  }
+
+  return (
+    <button onClick={handleSave} disabled={isLoading}>
+      {isLoading ? 'Saving...' : 'Save'}
+    </button>
+  )
+}`} />
+          </ApiSection>
+
+          <ApiSection
+            name="useCreateWidget"
+            type="hook"
+            description="Add widget to layout"
+          >
+            <CodeBlock language="typescript" code={`import { useCreateWidget } from '@quivly/dashboards'
+
+function AddWidgetButton({ tabId }) {
+  const { create, isLoading } = useCreateWidget()
+
+  const handleAddChart = async () => {
+    await create({
+      tabId,
+      widget: {
+        title: 'New Chart',
+        type: 'GRAPH',
+        gridPosition: { row: 0, column: 0, rowSpan: 4, columnSpan: 4 },
+        configuration: {
+          graphType: 'VERTICAL_BAR',
+          // ... chart config
+        }
+      }
+    })
+  }
+
+  return <button onClick={handleAddChart}>Add Chart</button>
+}`} />
+          </ApiSection>
+
+          <ApiSection
+            name="useChartData"
+            type="hook"
+            description="Fetch aggregated data for charts"
+          >
+            <CodeBlock language="typescript" code={`import { useChartData } from '@quivly/dashboards'
+
+function BarChartWidget({ widget }) {
+  const {
+    data,           // Transformed chart data
+    isLoading,
+    error,
+    refetch
+  } = useChartData({
+    objectMetadataId: widget.objectMetadataId,
+    configuration: widget.configuration
+  })
+
+  if (isLoading) return <ChartSkeleton />
+  if (error) return <ChartError />
+
+  return <BarChartRenderer data={data} config={widget.configuration} />
+}`} />
+          </ApiSection>
+
+          <h3 className="text-lg font-bold text-zinc-900 font-mono mb-4 mt-8">Utility Hooks</h3>
+
+          <ApiSection
+            name="useUpdateWidget"
+            type="hook"
+            description="Update widget in draft state"
+          >
+            <CodeBlock language="typescript" code={`import { useUpdateWidget } from '@quivly/dashboards'
+
+const { update } = useUpdateWidget()
+
+update(tabId, widgetId, {
+  title: 'Updated Title',
+  gridPosition: { row: 2, column: 0, rowSpan: 4, columnSpan: 6 }
+})`} />
+          </ApiSection>
+
+          <ApiSection
+            name="useDeleteWidget"
+            type="hook"
+            description="Remove widget from layout"
+          >
+            <CodeBlock language="typescript" code={`import { useDeleteWidget } from '@quivly/dashboards'
+
+const { deleteWidget } = useDeleteWidget()
+
+await deleteWidget(tabId, widgetId)  // Removes from draft`} />
+          </ApiSection>
+        </>
+      )
+    },
+
+    state: {
+      title: "State Management",
+      content: (
+        <>
+          <h3 className="text-lg font-bold text-zinc-900 font-mono mb-4 flex items-center gap-2">
+            <Database size={18} /> Zustand Store
+          </h3>
+
+          <div className="bg-zinc-50 border border-border p-4 rounded-sm mb-8">
+            <p className="text-sm text-zinc-600 mb-4">
+              The dashboard system uses <strong>Zustand</strong> for state management with a <strong>draft/persisted pattern</strong>.
+              This enables safe editing with rollback capabilities.
+            </p>
+          </div>
+
+          <ApiSection
+            name="pageLayoutStore"
+            type="store"
+            description="Main Zustand store for page layout state"
+          >
+            <CodeBlock language="typescript" code={`import { create } from 'zustand'
+import { immer } from 'zustand/middleware/immer'
+
+interface PageLayoutStore {
+  // ===== STATE =====
+  persistedLayout: PageLayout | null        // Server data (read-only)
+  draftLayout: DraftPageLayout | null       // Local edits (editable)
+  currentLayouts: TabLayouts               // react-grid-layout format
+  isEditMode: boolean                       // Edit mode toggle
+  editingWidgetId: string | null            // Widget being edited
+  selectedCells: Set<string>                // Grid cell selection
+
+  // ===== ACTIONS =====
+
+  // Layout management
+  setPersistedLayout: (layout: PageLayout) => void
+  setDraftLayout: (layout: DraftPageLayout) => void
+
+  // Edit mode
+  enterEditMode: () => void                 // Copy persisted → draft
+  exitEditMode: () => void                  // Discard draft, exit edit
+
+  // Widget operations
+  updateWidget: (tabId: string, widgetId: string, updates: Partial<Widget>) => void
+  addWidget: (tabId: string, widget: Widget) => void
+  deleteWidget: (tabId: string, widgetId: string) => void
+
+  // Grid operations
+  updateGridPosition: (widgetId: string, position: GridPosition) => void
+  selectCells: (cells: Set<string>) => void
+  clearCellSelection: () => void
+
+  // Utilities
+  resetDraft: () => void                    // Reset draft to persisted
+}
+
+export const usePageLayoutStore = create<PageLayoutStore>()(
+  immer((set, get) => ({
+    // ... implementation
+  }))
+)`} />
+          </ApiSection>
+
+          <h3 className="text-lg font-bold text-zinc-900 font-mono mb-4 mt-8">State Flow</h3>
+
+          <div className="bg-white border border-border p-4 rounded-sm mb-8">
+            <h4 className="font-mono font-bold text-sm mb-4">View Mode → Edit Mode → Save</h4>
+            <CodeBlock language="typescript" code={`// 1. Initial state (View Mode)
+{
+  persistedLayout: { id: '...', tabs: [...] },  // From server
+  draftLayout: null,                             // No edits
+  isEditMode: false
+}
+
+// 2. User enters edit mode
+enterEditMode()
+→ draftLayout = JSON.parse(JSON.stringify(persistedLayout))
+→ isEditMode = true
+
+// 3. User makes changes
+updateWidget(tabId, widgetId, { title: 'New Title' })
+→ draftLayout.tabs[0].widgets[0].title = 'New Title'
+
+// 4a. User saves
+await saveLayout()
+→ Send draftLayout to server
+→ persistedLayout = server response
+→ draftLayout = null
+→ isEditMode = false
+
+// 4b. User cancels
+resetDraft()
+→ draftLayout = null
+→ isEditMode = false`} />
+          </div>
+
+          <h3 className="text-lg font-bold text-zinc-900 font-mono mb-4 mt-8">Store Selectors</h3>
+
+          <ApiSection
+            name="Recommended Selectors"
+            type="pattern"
+            description="Efficient state selection patterns"
+          >
+            <CodeBlock language="typescript" code={`import { usePageLayoutStore } from '@quivly/dashboards'
+
+// Get current layout (draft if editing, otherwise persisted)
+const currentLayout = usePageLayoutStore(s =>
+  s.isEditMode ? s.draftLayout : s.persistedLayout
+)
+
+// Get specific tab
+const tab = usePageLayoutStore(s => {
+  const layout = s.isEditMode ? s.draftLayout : s.persistedLayout
+  return layout?.tabs.find(t => t.id === tabId)
+})
+
+// Get specific widget
+const widget = usePageLayoutStore(s => {
+  const tab = s.draftLayout?.tabs.find(t => t.id === tabId)
+  return tab?.widgets.find(w => w.id === widgetId)
+})
+
+// Get only what you need (prevents unnecessary re-renders)
+const isEditMode = usePageLayoutStore(s => s.isEditMode)
+const editingWidgetId = usePageLayoutStore(s => s.editingWidgetId)`} />
+          </ApiSection>
+
+          <h3 className="text-lg font-bold text-zinc-900 font-mono mb-4 mt-8">Draft Pattern Benefits</h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            <FeatureList items={[
+              "Safe editing: Changes isolated to draft until saved",
+              "Rollback: Cancel discards all changes instantly",
+              "No data loss: Draft preserved even if save fails",
+              "Optimistic UI: Instant local updates, sync later",
+            ]} />
+            <FeatureList items={[
+              "Validation before save: Check draft before sending",
+              "Atomic saves: All changes in single transaction",
+              "Conflict prevention: Server validates before applying",
+              "Undo/redo ready: Draft history can be tracked",
+            ]} />
+          </div>
+        </>
+      )
+    },
+
+    features: {
+      title: "Advanced Features",
+      content: (
+        <>
+          <h3 className="text-lg font-bold text-zinc-900 font-mono mb-4">Chart Configuration</h3>
+
+          <ApiSection
+            name="Bar Chart Configuration"
+            type="config"
+            description="Comprehensive bar chart options"
+          >
+            <CodeBlock language="typescript" code={`interface BarChartConfiguration {
+  graphType: 'VERTICAL_BAR' | 'HORIZONTAL_BAR'
+
+  // Aggregation
+  aggregateFieldMetadataId: string          // Field to aggregate (e.g., 'amount')
+  aggregateOperation: AggregateOperations   // SUM, AVG, COUNT, MIN, MAX, etc.
+
+  // Primary Axis (X for vertical, Y for horizontal)
+  primaryAxisGroupByFieldMetadataId: string // Group by field (e.g., 'stage')
+  primaryAxisGroupBySubFieldName?: string   // For composite fields
+  primaryAxisDateGranularity?: DateGranularity  // DAY, WEEK, MONTH, QUARTER, YEAR
+  primaryAxisOrderBy?: 'FIELD_ASC' | 'FIELD_DESC' | 'VALUE_ASC' | 'VALUE_DESC'
+
+  // Secondary Axis (optional, for grouped/stacked bars)
+  secondaryAxisGroupByFieldMetadataId?: string
+  secondaryAxisGroupBySubFieldName?: string
+  secondaryAxisDateGranularity?: DateGranularity
+  secondaryAxisOrderBy?: OrderBy
+
+  // Display Options
+  groupMode?: 'GROUPED' | 'STACKED'         // Only if secondary axis
+  omitNullValues?: boolean                   // Filter out nulls
+  axisNameDisplay?: 'NONE' | 'X' | 'Y' | 'BOTH'
+  displayDataLabel?: boolean                 // Show values on bars
+  rangeMin?: number                          // Y-axis minimum
+  rangeMax?: number                          // Y-axis maximum
+  color?: string                             // Color scheme name
+  description?: string
+
+  // Filtering
+  filter?: RecordFilter                      // Query filter
+
+  // Localization
+  timezone?: string                          // IANA timezone (default: 'UTC')
+  firstDayOfTheWeek?: number                 // 0-6 (default: 1 = Monday)
+}`} />
+          </ApiSection>
+
+          <ApiSection
+            name="Aggregate Operations"
+            type="enum"
+            description="13 supported aggregate operations"
+          >
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
+              <Badge>MIN</Badge>
+              <Badge>MAX</Badge>
+              <Badge>AVG</Badge>
+              <Badge>SUM</Badge>
+              <Badge>COUNT</Badge>
+              <Badge>COUNT_UNIQUE_VALUES</Badge>
+              <Badge>COUNT_EMPTY</Badge>
+              <Badge>COUNT_NOT_EMPTY</Badge>
+              <Badge>COUNT_TRUE</Badge>
+              <Badge>COUNT_FALSE</Badge>
+              <Badge>PERCENTAGE_EMPTY</Badge>
+              <Badge>PERCENTAGE_NOT_EMPTY</Badge>
+              <Badge>PERCENTAGE</Badge>
+            </div>
+          </ApiSection>
+
+          <h3 className="text-lg font-bold text-zinc-900 font-mono mb-4 mt-8">Color Schemes</h3>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+            {['blue', 'purple', 'turquoise', 'orange', 'pink', 'yellow', 'red', 'green',
+              'sky', 'gray', 'tomato', 'ruby', 'crimson', 'plum', 'violet', 'iris',
+              'cyan', 'jade', 'grass', 'mint', 'lime', 'bronze', 'gold', 'brown'].map(color => (
+              <div key={color} className="flex items-center gap-2 p-2 bg-white border border-border rounded-sm">
+                <div className={`w-6 h-6 rounded-sm bg-${color}-500`} />
+                <span className="font-mono text-xs">{color}</span>
+              </div>
+            ))}
+          </div>
+
+          <h3 className="text-lg font-bold text-zinc-900 font-mono mb-4 mt-8">Conditional Display</h3>
+
+          <ApiSection
+            name="JSON Logic Rules"
+            type="feature"
+            description="Dynamic widget visibility based on context"
+          >
+            <CodeBlock language="typescript" code={`// Widget with conditional display
+{
+  id: 'mobile-only-widget',
+  title: 'Mobile Chart',
+  type: 'GRAPH',
+  conditionalDisplay: {
+    "==": [{ "var": "device" }, "MOBILE"]  // Show only on mobile
+  }
+}
+
+// Context evaluation
+type WidgetVisibilityContext = {
+  device: 'MOBILE' | 'DESKTOP'
+}
+
+// Evaluation (using json-logic-js)
+import jsonLogic from 'json-logic-js'
+
+const isVisible = jsonLogic.apply(
+  widget.conditionalDisplay,
+  { device: 'DESKTOP' }
+)  // false (hidden on desktop)
+
+// More complex rules
+{
+  "and": [
+    { "==": [{ "var": "device" }, "DESKTOP"] },
+    { "!=": [{ "var": "userRole" }, "guest"] }
+  ]
+}  // Show only on desktop AND for non-guests`} />
+          </ApiSection>
+
+          <h3 className="text-lg font-bold text-zinc-900 font-mono mb-4 mt-8">Data Transformation Pipeline</h3>
+
+          <div className="bg-white border border-border p-4 rounded-sm mb-8">
+            <h4 className="font-mono font-bold text-sm mb-4">Chart Data Flow</h4>
+            <CodeBlock language="typescript" code={`// 1. Raw GroupBy Results (from backend)
+[
+  { groupByDimensionValues: ['2024-01', 'Qualified'], amount_sum: 125000 },
+  { groupByDimensionValues: ['2024-01', 'Proposal'], amount_sum: 80000 },
+  // ...
+]
+
+// 2. Filter by range/nulls
+filterGroupByResults(results, config)
+→ Remove values outside rangeMin/rangeMax
+→ Remove null values if omitNullValues=true
+
+// 3. Format dimension values
+formatDimensionValue('2024-01', field, granularity)
+→ '2024-01' becomes 'January 2024'
+
+// 4. Compute aggregate values
+computeAggregateValueFromGroupByResult(result, operation)
+→ Convert currency micros → actual amount (/1,000,000)
+→ Handle COUNT, PERCENT operations
+
+// 5. Fill date gaps (for temporal charts)
+fillDateGapsInBarChartData(data, config)
+→ Add empty buckets for missing dates
+→ Only for DAY, WEEK, MONTH, QUARTER, YEAR
+
+// 6. Transform to chart format
+transformGroupByDataToBarChartData(data, config)
+→ {
+     data: BarChartDataItem[],    // Nivo-compatible
+     keys: string[],                // Bar keys
+     indexBy: string,               // X-axis field
+     series: BarChartSeries[],      // Color mapping
+     formattedToRawLookup: Map      // For drilldown
+   }
+
+// 7. Render with Nivo
+<ResponsiveBar data={data} keys={keys} indexBy={indexBy} ... />`} />
+          </div>
+
+          <h3 className="text-lg font-bold text-zinc-900 font-mono mb-4 mt-8">Drilldown Navigation</h3>
+
+          <ApiSection
+            name="Chart Click Handlers"
+            type="feature"
+            description="Navigate to filtered record lists on chart interaction"
+          >
+            <CodeBlock language="typescript" code={`// User clicks on bar/point/slice
+const handleBarClick = (datum: BarChartDataItem) => {
+  // 1. Extract clicked value (formatted)
+  const formattedValue = datum.indexValue  // e.g., "January 2024"
+
+  // 2. Lookup raw value
+  const rawValue = formattedToRawLookup.get(formattedValue)
+  // e.g., { createdAt: { gte: '2024-01-01', lt: '2024-02-01' } }
+
+  // 3. Build filter query params
+  const queryParams = buildChartDrilldownQueryParams({
+    chartFilter: widget.configuration.filter,  // Existing filters
+    dimensionFilter: rawValue,                  // New filter
+    viewId: currentViewId
+  })
+
+  // 4. Navigate to record index with filters
+  router.push(\`/objects/opportunities?\${queryParams}\`)
+}
+
+// Example result:
+// /objects/opportunities?
+//   viewId=abc123&
+//   filter[createdAt][gte]=2024-01-01&
+//   filter[createdAt][lt]=2024-02-01&
+//   filter[stage][eq]=Qualified`} />
+          </ApiSection>
+        </>
+      )
+    },
+
+    styles: {
+      title: "UI & Styles",
+      content: (
+        <>
+          <h3 className="text-lg font-bold text-zinc-900 font-mono mb-4 flex items-center gap-2">
+            <Palette size={18} /> Theming
+          </h3>
+
+          <div className="bg-zinc-50 border border-border p-4 rounded-sm mb-8">
+            <p className="text-sm text-zinc-600 mb-4">
+              The dashboard system is fully themeable via CSS variables. Integrates seamlessly with existing design systems.
+            </p>
+          </div>
+
+          <ApiSection
+            name="CSS Variables"
+            type="styling"
+            description="Customizable theme tokens"
+          >
+            <CodeBlock language="css" code={`:root {
+  /* Layout */
+  --dashboard-grid-row-height: 55px;
+  --dashboard-grid-margin: 16px;
+  --dashboard-grid-cols-desktop: 12;
+  --dashboard-grid-cols-mobile: 1;
+
+  /* Colors */
+  --dashboard-bg-primary: hsl(0, 0%, 100%);
+  --dashboard-bg-secondary: hsl(0, 0%, 98%);
+  --dashboard-border-light: hsl(0, 0%, 90%);
+  --dashboard-border-dark: hsl(0, 0%, 70%);
+
+  /* Widget */
+  --widget-bg: hsl(0, 0%, 100%);
+  --widget-border: 1px solid var(--dashboard-border-light);
+  --widget-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  --widget-shadow-hover: 0 4px 12px rgba(0,0,0,0.15);
+
+  /* Chart */
+  --chart-font-primary: hsl(0, 0%, 10%);
+  --chart-font-secondary: hsl(0, 0%, 40%);
+  --chart-grid-line: hsl(0, 0%, 90%);
+
+  /* Edit Mode */
+  --edit-overlay-bg: rgba(0, 0, 0, 0.02);
+  --edit-selected-border: 2px solid hsl(210, 100%, 50%);
+}`} />
+          </ApiSection>
+
+          <h3 className="text-lg font-bold text-zinc-900 font-mono mb-4 mt-8">Grid Layout Styling</h3>
+
+          <div className="bg-white border border-border p-4 rounded-sm mb-8">
+            <CodeBlock language="tsx" code={`import { Responsive, WidthProvider } from 'react-grid-layout'
+import 'react-grid-layout/css/styles.css'
+
+const ResponsiveGridLayout = WidthProvider(Responsive)
+
+<ResponsiveGridLayout
+  className="layout"
+  breakpoints={{ desktop: 768, mobile: 0 }}
+  cols={{ desktop: 12, mobile: 1 }}
+  layouts={{ desktop: layouts.desktop, mobile: layouts.mobile }}
+  onLayoutChange={handleLayoutChange}
+  isDraggable={isEditMode}
+  isResizable={isEditMode}
+  rowHeight={55}
+  margin={[16, 16]}
+  containerPadding={[0, 0]}
+  compactType="vertical"
+  preventCollision={false}
+>
+  {widgets.map(widget => (
+    <div key={widget.id} className="widget-container">
+      <WidgetCard widget={widget}>
+        <WidgetRenderer widget={widget} />
+      </WidgetCard>
+    </div>
+  ))}
+</ResponsiveGridLayout>`} />
+          </div>
+
+          <h3 className="text-lg font-bold text-zinc-900 font-mono mb-4 mt-8">Widget Card Variants</h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div className="bg-white p-4 border border-border rounded-sm">
+              <h4 className="font-mono font-bold text-sm mb-2">Dashboard</h4>
+              <p className="text-xs text-zinc-600 mb-3">Default card with shadow, hover effects.</p>
+              <div className="text-[10px] space-y-1">
+                <div>Shadow: <code>0 1px 3px rgba(0,0,0,0.1)</code></div>
+                <div>Hover: <code>0 4px 12px rgba(0,0,0,0.15)</code></div>
+                <div>Border: <code>1px solid border-light</code></div>
+              </div>
+            </div>
+            <div className="bg-white p-4 border border-border rounded-sm">
+              <h4 className="font-mono font-bold text-sm mb-2">Side Column</h4>
+              <p className="text-xs text-zinc-600 mb-3">Pinned panel, no shadow.</p>
+              <div className="text-[10px] space-y-1">
+                <div>Shadow: <code>none</code></div>
+                <div>Border: <code>1px solid border-light</code></div>
+                <div>Sticky: <code>position: sticky</code></div>
+              </div>
+            </div>
+            <div className="bg-white p-4 border border-border rounded-sm">
+              <h4 className="font-mono font-bold text-sm mb-2">Canvas</h4>
+              <p className="text-xs text-zinc-600 mb-3">Fullscreen, no chrome.</p>
+              <div className="text-[10px] space-y-1">
+                <div>Shadow: <code>none</code></div>
+                <div>Border: <code>none</code></div>
+                <div>Padding: <code>0</code></div>
+              </div>
+            </div>
+          </div>
+
+          <h3 className="text-lg font-bold text-zinc-900 font-mono mb-4 mt-8">Responsive Behavior</h3>
+
+          <div className="bg-zinc-50 border border-border p-4 rounded-sm mb-8">
+            <h4 className="font-mono font-bold text-sm mb-4">Breakpoint Strategy</h4>
+            <CodeBlock language="typescript" code={`const BREAKPOINTS = {
+  DESKTOP: 768,  // px
+  MOBILE: 0
+}
+
+const COLUMNS = {
+  DESKTOP: 12,   // 12-column grid
+  MOBILE: 1      // Single column stack
+}
+
+// Mobile layout auto-generated
+const mobileLayout = desktopLayout.map(item => ({
+  ...item,
+  x: 0,           // Force single column
+  w: 1,           // Full width
+  // Preserve y, h (vertical position/height)
+}))
+
+// Result:
+// Desktop: Flexible 12-col grid
+// Mobile: Vertical stack (same order as grid)`} />
+          </div>
         </>
       )
     }

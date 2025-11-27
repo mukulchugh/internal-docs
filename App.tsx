@@ -92,15 +92,22 @@ export default function App() {
   const [activePkgId, setActivePkgId] = useState<string>('data-grid');
   const [activeTab, setActiveTab] = useState<keyof PackageDocs>('overview');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const activePkg = PACKAGES.find(p => p.id === activePkgId) || PACKAGES[0];
-  
+
   // Resolve content
   const pkgDocs = DOCS_MAP[activePkgId] || EMPTY_DOCS;
   const activeContent = pkgDocs[activeTab] || { title: "Not Found", content: "Section not found" };
 
-  const prodPackages = PACKAGES.filter(p => p.status === 'prod');
-  const proposedPackages = PACKAGES.filter(p => p.status === 'proposed');
+  // Filter packages based on search query
+  const filteredPackages = PACKAGES.filter(pkg =>
+    pkg.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    pkg.description.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const prodPackages = filteredPackages.filter(p => p.status === 'prod');
+  const proposedPackages = filteredPackages.filter(p => p.status === 'proposed');
 
   return (
     <div className="flex h-screen overflow-hidden bg-white text-zinc-900 font-sans">
