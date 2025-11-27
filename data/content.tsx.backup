@@ -286,11 +286,11 @@ const DATA_GRID_FILE_TREE: FileNode = {
           name: "core",
           type: "folder",
           children: [
-            { name: "data-grid.tsx", type: "component", comment: "Main component" },
-            { name: "data-grid-provider.tsx", type: "component", comment: "Context provider" },
-            { name: "use-tan-stack-table.ts", type: "hook", comment: "TanStack wrapper" },
-            { name: "use-virtualization.ts", type: "hook", comment: "Virtual scroll" },
-            { name: "create-columns.ts", type: "file", comment: "Column factory" },
+            { name: "DataGrid.tsx", type: "component", comment: "Main component" },
+            { name: "DataGridProvider.tsx", type: "component", comment: "Context provider" },
+            { name: "useTanStackTable.ts", type: "hook", comment: "TanStack wrapper" },
+            { name: "useVirtualization.ts", type: "hook", comment: "Virtual scroll" },
+            { name: "createColumns.ts", type: "file", comment: "Column factory" },
           ]
         },
         {
@@ -301,45 +301,45 @@ const DATA_GRID_FILE_TREE: FileNode = {
               name: "header",
               type: "folder",
               children: [
-                { name: "table-header.tsx", type: "component" },
-                { name: "header-cell.tsx", type: "component" },
-                { name: "column-resizer.tsx", type: "component" },
-                { name: "sort-indicator.tsx", type: "component" },
+                { name: "TableHeader.tsx", type: "component" },
+                { name: "HeaderCell.tsx", type: "component" },
+                { name: "ColumnResizer.tsx", type: "component" },
+                { name: "SortIndicator.tsx", type: "component" },
               ]
             },
             {
               name: "body",
               type: "folder",
               children: [
-                { name: "virtualized-body.tsx", type: "component", comment: "Windowing" },
-                { name: "grouped-body.tsx", type: "component" },
-                { name: "group-header.tsx", type: "component" },
+                { name: "VirtualizedBody.tsx", type: "component", comment: "Windowing" },
+                { name: "GroupedBody.tsx", type: "component" },
+                { name: "GroupHeader.tsx", type: "component" },
               ]
             },
             {
               name: "row",
               type: "folder",
               children: [
-                { name: "table-row.tsx", type: "component" },
-                { name: "draggable-row.tsx", type: "component" },
-                { name: "row-checkbox.tsx", type: "component" },
+                { name: "TableRow.tsx", type: "component" },
+                { name: "DraggableRow.tsx", type: "component" },
+                { name: "RowCheckbox.tsx", type: "component" },
               ]
             },
             {
               name: "cell",
               type: "folder",
               children: [
-                { name: "table-cell.tsx", type: "component" },
-                { name: "cell-edit-portal.tsx", type: "component", comment: "Floating UI" },
-                { name: "cell-display-mode.tsx", type: "component" },
+                { name: "TableCell.tsx", type: "component" },
+                { name: "CellEditPortal.tsx", type: "component", comment: "Floating UI" },
+                { name: "CellDisplayMode.tsx", type: "component" },
               ]
             },
             {
               name: "footer",
               type: "folder",
               children: [
-                { name: "table-footer.tsx", type: "component" },
-                { name: "aggregate-cell.tsx", type: "component" },
+                { name: "TableFooter.tsx", type: "component" },
+                { name: "AggregateCell.tsx", type: "component" },
               ]
             },
           ]
@@ -348,23 +348,23 @@ const DATA_GRID_FILE_TREE: FileNode = {
           name: "hooks",
           type: "folder",
           children: [
-            { name: "use-table-instance.ts", type: "hook" },
-            { name: "use-row-selection.ts", type: "hook" },
-            { name: "use-keyboard-navigation.ts", type: "hook" },
-            { name: "use-inline-edit.ts", type: "hook" },
-            { name: "use-drag-drop.ts", type: "hook" },
-            { name: "use-grouping.ts", type: "hook" },
-            { name: "use-aggregates.ts", type: "hook" },
-            { name: "use-scroll-to-row.ts", type: "hook" },
+            { name: "useTableInstance.ts", type: "hook" },
+            { name: "useRowSelection.ts", type: "hook" },
+            { name: "useKeyboardNavigation.ts", type: "hook" },
+            { name: "useInlineEdit.ts", type: "hook" },
+            { name: "useDragDrop.ts", type: "hook" },
+            { name: "useGrouping.ts", type: "hook" },
+            { name: "useAggregates.ts", type: "hook" },
+            { name: "useScrollToRow.ts", type: "hook" },
           ]
         },
         {
           name: "interfaces",
           type: "folder",
           children: [
-            { name: "field-registry.ts", type: "file", comment: "Field plugin system" },
-            { name: "data-source.ts", type: "file", comment: "Server-side" },
-            { name: "theme.ts", type: "file" },
+            { name: "FieldRegistry.ts", type: "file", comment: "Field plugin system" },
+            { name: "DataSource.ts", type: "file", comment: "Server-side" },
+            { name: "Theme.ts", type: "file" },
           ]
         },
         {
@@ -394,28 +394,28 @@ const DATA_GRID_FIELDS_TREE: FileNode = {
           name: "fields",
           type: "folder",
           children: [
-            { name: "text-field.tsx", type: "component" },
-            { name: "number-field.tsx", type: "component" },
-            { name: "currency-field.tsx", type: "component" },
-            { name: "date-field.tsx", type: "component" },
-            { name: "select-field.tsx", type: "component" },
-            { name: "multi-select-field.tsx", type: "component" },
-            { name: "email-field.tsx", type: "component" },
-            { name: "phone-field.tsx", type: "component" },
-            { name: "url-field.tsx", type: "component" },
-            { name: "relation-field.tsx", type: "component" },
-            { name: "user-field.tsx", type: "component" },
-            { name: "rating-field.tsx", type: "component" },
-            { name: "progress-field.tsx", type: "component" },
-            { name: "boolean-field.tsx", type: "component" },
-            { name: "tags-field.tsx", type: "component" },
-            { name: "color-field.tsx", type: "component" },
-            { name: "json-field.tsx", type: "component" },
-            { name: "rich-text-field.tsx", type: "component" },
+            { name: "TextField.tsx", type: "component" },
+            { name: "NumberField.tsx", type: "component" },
+            { name: "CurrencyField.tsx", type: "component" },
+            { name: "DateField.tsx", type: "component" },
+            { name: "SelectField.tsx", type: "component" },
+            { name: "MultiSelectField.tsx", type: "component" },
+            { name: "EmailField.tsx", type: "component" },
+            { name: "PhoneField.tsx", type: "component" },
+            { name: "UrlField.tsx", type: "component" },
+            { name: "RelationField.tsx", type: "component" },
+            { name: "UserField.tsx", type: "component" },
+            { name: "RatingField.tsx", type: "component" },
+            { name: "ProgressField.tsx", type: "component" },
+            { name: "BooleanField.tsx", type: "component" },
+            { name: "TagsField.tsx", type: "component" },
+            { name: "ColorField.tsx", type: "component" },
+            { name: "JsonField.tsx", type: "component" },
+            { name: "RichTextField.tsx", type: "component" },
           ]
         },
-        { name: "create-field-registry.ts", type: "file", comment: "Registry factory" },
-        { name: "default-registry.ts", type: "file", comment: "Pre-configured" },
+        { name: "createFieldRegistry.ts", type: "file", comment: "Registry factory" },
+        { name: "defaultRegistry.ts", type: "file", comment: "Pre-configured" },
         { name: "index.ts", type: "file" },
       ]
     },
@@ -435,12 +435,12 @@ const DASHBOARD_FILE_TREE: FileNode = {
           name: "core",
           type: "folder",
           children: [
-            { name: "page-layout-renderer.tsx", type: "component", comment: "Main entry point" },
-            { name: "page-layout-content.tsx", type: "component", comment: "Layout mode router" },
-            { name: "grid-layout.tsx", type: "component", comment: "12-column grid" },
-            { name: "vertical-list-layout.tsx", type: "component", comment: "Stacked layout" },
-            { name: "canvas-layout.tsx", type: "component", comment: "Single widget" },
-            { name: "tab-list.tsx", type: "component", comment: "Tab management" },
+            { name: "PageLayoutRenderer.tsx", type: "component", comment: "Main entry point" },
+            { name: "PageLayoutContent.tsx", type: "component", comment: "Layout mode router" },
+            { name: "GridLayout.tsx", type: "component", comment: "12-column grid" },
+            { name: "VerticalListLayout.tsx", type: "component", comment: "Stacked layout" },
+            { name: "CanvasLayout.tsx", type: "component", comment: "Single widget" },
+            { name: "TabList.tsx", type: "component", comment: "Tab management" },
           ]
         },
         {
@@ -451,80 +451,80 @@ const DASHBOARD_FILE_TREE: FileNode = {
               name: "graph",
               type: "folder",
               children: [
-                { name: "graph-widget.tsx", type: "component", comment: "Chart router" },
-                { name: "bar-chart-renderer.tsx", type: "component" },
-                { name: "line-chart-renderer.tsx", type: "component" },
-                { name: "pie-chart-renderer.tsx", type: "component" },
-                { name: "gauge-chart-renderer.tsx", type: "component" },
-                { name: "aggregate-chart-renderer.tsx", type: "component" },
-                { name: "use-chart-data.ts", type: "hook", comment: "Data fetching" },
-                { name: "transform-chart-data.ts", type: "file", comment: "Data pipeline" },
+                { name: "GraphWidget.tsx", type: "component", comment: "Chart router" },
+                { name: "BarChartRenderer.tsx", type: "component" },
+                { name: "LineChartRenderer.tsx", type: "component" },
+                { name: "PieChartRenderer.tsx", type: "component" },
+                { name: "GaugeChartRenderer.tsx", type: "component" },
+                { name: "AggregateChartRenderer.tsx", type: "component" },
+                { name: "useChartData.ts", type: "hook", comment: "Data fetching" },
+                { name: "transformChartData.ts", type: "file", comment: "Data pipeline" },
               ]
             },
-            { name: "iframe-widget.tsx", type: "component" },
-            { name: "fields-widget.tsx", type: "component" },
-            { name: "timeline-widget.tsx", type: "component" },
-            { name: "tasks-widget.tsx", type: "component" },
-            { name: "notes-widget.tsx", type: "component" },
-            { name: "files-widget.tsx", type: "component" },
-            { name: "emails-widget.tsx", type: "component" },
-            { name: "calendar-widget.tsx", type: "component" },
-            { name: "rich-text-widget.tsx", type: "component" },
-            { name: "workflow-widget.tsx", type: "component" },
-            { name: "widget-renderer.tsx", type: "component", comment: "Type router" },
-            { name: "widget-card.tsx", type: "component", comment: "Wrapper" },
+            { name: "IframeWidget.tsx", type: "component" },
+            { name: "FieldsWidget.tsx", type: "component" },
+            { name: "TimelineWidget.tsx", type: "component" },
+            { name: "TasksWidget.tsx", type: "component" },
+            { name: "NotesWidget.tsx", type: "component" },
+            { name: "FilesWidget.tsx", type: "component" },
+            { name: "EmailsWidget.tsx", type: "component" },
+            { name: "CalendarWidget.tsx", type: "component" },
+            { name: "RichTextWidget.tsx", type: "component" },
+            { name: "WorkflowWidget.tsx", type: "component" },
+            { name: "WidgetRenderer.tsx", type: "component", comment: "Type router" },
+            { name: "WidgetCard.tsx", type: "component", comment: "Wrapper" },
           ]
         },
         {
           name: "settings",
           type: "folder",
           children: [
-            { name: "chart-settings-modal.tsx", type: "component" },
-            { name: "chart-type-selector.tsx", type: "component" },
-            { name: "chart-config-form.tsx", type: "component" },
-            { name: "filter-builder.tsx", type: "component" },
-            { name: "widget-settings-panel.tsx", type: "component" },
+            { name: "ChartSettingsModal.tsx", type: "component" },
+            { name: "ChartTypeSelector.tsx", type: "component" },
+            { name: "ChartConfigForm.tsx", type: "component" },
+            { name: "FilterBuilder.tsx", type: "component" },
+            { name: "WidgetSettingsPanel.tsx", type: "component" },
           ]
         },
         {
           name: "stores",
           type: "folder",
           children: [
-            { name: "page-layout-store.ts", type: "file", comment: "Zustand store" },
-            { name: "widget-store.ts", type: "file" },
-            { name: "chart-data-store.ts", type: "file" },
+            { name: "pageLayoutStore.ts", type: "file", comment: "Zustand store" },
+            { name: "widgetStore.ts", type: "file" },
+            { name: "chartDataStore.ts", type: "file" },
           ]
         },
         {
           name: "hooks",
           type: "folder",
           children: [
-            { name: "use-page-layout.ts", type: "hook" },
-            { name: "use-save-page-layout.ts", type: "hook" },
-            { name: "use-create-widget.ts", type: "hook" },
-            { name: "use-update-widget.ts", type: "hook" },
-            { name: "use-delete-widget.ts", type: "hook" },
-            { name: "use-chart-data.ts", type: "hook", comment: "Chart queries" },
+            { name: "usePageLayout.ts", type: "hook" },
+            { name: "useSavePageLayout.ts", type: "hook" },
+            { name: "useCreateWidget.ts", type: "hook" },
+            { name: "useUpdateWidget.ts", type: "hook" },
+            { name: "useDeleteWidget.ts", type: "hook" },
+            { name: "useChartData.ts", type: "hook", comment: "Chart queries" },
           ]
         },
         {
           name: "types",
           type: "folder",
           children: [
-            { name: "page-layout.ts", type: "file" },
-            { name: "widget.ts", type: "file" },
-            { name: "chart-configuration.ts", type: "file" },
-            { name: "grid-position.ts", type: "file" },
+            { name: "PageLayout.ts", type: "file" },
+            { name: "Widget.ts", type: "file" },
+            { name: "ChartConfiguration.ts", type: "file" },
+            { name: "GridPosition.ts", type: "file" },
           ]
         },
         {
           name: "utils",
           type: "folder",
           children: [
-            { name: "transform-chart-data.ts", type: "file", comment: "Data transformation" },
+            { name: "transformChartData.ts", type: "file", comment: "Data transformation" },
             { name: "formatters.ts", type: "file", comment: "Value formatting" },
-            { name: "color-schemes.ts", type: "file", comment: "24 presets" },
-            { name: "grid-helpers.ts", type: "file", comment: "Grid calculations" },
+            { name: "colorSchemes.ts", type: "file", comment: "24 presets" },
+            { name: "gridHelpers.ts", type: "file", comment: "Grid calculations" },
           ]
         },
         { name: "index.ts", type: "file", comment: "Public exports" },
@@ -1432,7 +1432,7 @@ createNewRecord({
               Four nested contexts provide table, row, cell, and body-level state access.
             </p>
 
-            <CodeBlock title="data-grid-context.ts" code={`// Main table context - provided by DataGridProvider
+            <CodeBlock title="DataGridContext.ts" code={`// Main table context - provided by DataGridProvider
 interface DataGridContextValue {
   tableId: string;
   objectName: string;
@@ -2420,7 +2420,7 @@ export function TableCell({
               The active row receives special border treatment with rounded corners.
             </p>
 
-            <CodeBlock title="table-row.tsx" code={`// Row container with data attributes for styling
+            <CodeBlock title="TableRow.tsx" code={`// Row container with data attributes for styling
 interface RowProps {
   rowId: string;
   isActive: boolean;
@@ -2500,7 +2500,7 @@ const rowHoverStyles = \`
               </div>
             </div>
 
-            <CodeBlock title="header-cell.tsx" code={`// Header cell with resize handle
+            <CodeBlock title="HeaderCell.tsx" code={`// Header cell with resize handle
 export function HeaderCell({
   column,
   isResizing,
@@ -2566,7 +2566,7 @@ export function HeaderCell({
               </ul>
             </div>
 
-            <CodeBlock title="cell-edit-portal.tsx" code={`import { useFloating, offset, flip, shift } from '@floating-ui/react';
+            <CodeBlock title="CellEditPortal.tsx" code={`import { useFloating, offset, flip, shift } from '@floating-ui/react';
 
 export function CellEditPortal({
   cell,
@@ -2735,7 +2735,7 @@ const updateScrollShadows = (scrollTop: number, scrollLeft: number) => {
               </div>
             </div>
 
-            <CodeBlock title="use-keyboard-navigation.ts" code={`import { useHotkeys } from 'react-hotkeys-hook';
+            <CodeBlock title="useKeyboardNavigation.ts" code={`import { useHotkeys } from 'react-hotkeys-hook';
 
 export function useKeyboardNavigation({
   rowCount,
@@ -2807,7 +2807,7 @@ export function useKeyboardNavigation({
               </ul>
             </div>
 
-            <CodeBlock title="virtualized-body.tsx" code={`import { useVirtualizer } from '@tanstack/react-virtual';
+            <CodeBlock title="VirtualizedBody.tsx" code={`import { useVirtualizer } from '@tanstack/react-virtual';
 
 export function VirtualizedBody({ rows, rowHeight = 32, overscan = 10 }) {
   const parentRef = useRef<HTMLDivElement>(null);
