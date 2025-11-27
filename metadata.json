@@ -1,5 +1,5 @@
 {
-  "name": "Quivly Engineering Hub",
-  "description": "Central documentation hub for Quivly engineering standards, packages, and RFCs.",
+  "name": "Quivly Dev Docs",
+  "description": "Internal engineering documentation for Quivly packages and systems with interactive diagrams.",
   "requestFramePermissions": []
 }
