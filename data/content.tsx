@@ -6281,7 +6281,7 @@ export const pageLayoutRouter = router({
           <h3 className="text-lg font-bold text-zinc-900 font-mono mb-4 mt-8">Complete System Architecture</h3>
           <div className="bg-white border border-border p-4 rounded-sm mb-8">
             <Mermaid chart={`graph TB
-    subgraph Frontend["🎨 FRONTEND LAYER"]
+    subgraph Frontend["FRONTEND LAYER"]
         subgraph UI["UI Components"]
             PDR[PageLayoutRenderer - Entry Point]
             DEC[DashboardEditControls - Edit Mode UI]
@@ -6366,7 +6366,7 @@ export const pageLayoutRouter = router({
         end
     end
 
-    subgraph Backend["⚙️ BACKEND LAYER (Supabase + tRPC)"]
+    subgraph Backend["BACKEND LAYER (Supabase + tRPC)"]
         subgraph API["tRPC API Routes"]
             PLR[pageLayoutRouter - Main Router]
 
@@ -6433,7 +6433,7 @@ export const pageLayoutRouter = router({
         end
     end
 
-    subgraph External["🔌 EXTERNAL INTEGRATIONS"]
+    subgraph External["EXTERNAL INTEGRATIONS"]
         NIVO[Nivo Charts - @nivo/bar, line, pie]
         RGL[react-grid-layout - Drag & Drop Grid]
         JSONL[json-logic-js - Conditional Display]
@@ -6702,8 +6702,8 @@ export const pageLayoutRouter = router({
     App[App.tsx - Root]
 
     subgraph Pages["Pages"]
-        DP[DashboardPage - app/dashboards/[id]/page.tsx]
-        OP[ObjectPage - app/objects/[type]/page.tsx]
+        DP["DashboardPage - app/dashboards/id/page.tsx"]
+        OP["ObjectPage - app/objects/type/page.tsx"]
     end
 
     subgraph Layout["Layout Components"]
@@ -6841,7 +6841,7 @@ export const pageLayoutRouter = router({
           <h3 className="text-lg font-bold text-zinc-900 font-mono mb-4 mt-8">Services & Modules Mapping</h3>
           <div className="bg-white border border-border p-4 rounded-sm mb-8">
             <Mermaid chart={`graph LR
-    subgraph FrontendPackage["@quivly/dashboards (Frontend)"]
+    subgraph FrontendPackage["quivly/dashboards Frontend"]
         subgraph Components["components/"]
             C1[PageLayoutRenderer.tsx]
             C2[GridLayoutRenderer.tsx]
@@ -6918,10 +6918,10 @@ export const pageLayoutRouter = router({
     end
 
     subgraph ExternalLibs["External Libraries"]
-        L1[@nivo/bar - @nivo/line - @nivo/pie]
+        L1["nivo/bar - nivo/line - nivo/pie"]
         L2[react-grid-layout - Grid System]
         L3[zustand - State Management]
-        L4[@tanstack/react-query - Data Fetching]
+        L4["tanstack/react-query - Data Fetching"]
         L5[zod - Validation]
         L6[json-logic-js - Conditional Logic]
     end
@@ -7202,80 +7202,79 @@ export const pageLayoutRouter = router({
             <Mermaid chart={`stateDiagram-v2
     [*] --> ViewMode: Load Dashboard
 
-    ViewMode: 📊 View Mode
-    ViewMode: - persistedLayout displayed
-    ViewMode: - Grid layout (read-only)
-    ViewMode: - Interactive charts
-    ViewMode: - No edit controls
+    ViewMode: View Mode
+    ViewMode: persistedLayout displayed
+    ViewMode: Grid layout read-only
+    ViewMode: Interactive charts
+    ViewMode: No edit controls
 
-    ViewMode --> EditMode: Click "Edit Dashboard"
+    ViewMode --> EditMode: Click Edit Dashboard
 
-    EditMode: ✏️ Edit Mode
-    EditMode: - draftLayout = clone(persistedLayout)
-    EditMode: - isEditMode = true
-    EditMode: - Edit controls visible
-    EditMode: - Grid draggable/resizable
+    EditMode: Edit Mode
+    EditMode: draftLayout cloned
+    EditMode: isEditMode true
+    EditMode: Edit controls visible
+    EditMode: Grid draggable/resizable
 
-    EditMode --> AddWidget: Click "+ Add Widget"
+    EditMode --> AddWidget: Click Add Widget
     EditMode --> ConfigureWidget: Click widget settings
     EditMode --> DragWidget: Drag widget
     EditMode --> ResizeWidget: Resize widget
     EditMode --> DeleteWidget: Click delete
-    EditMode --> ViewMode: Click "Cancel"
+    EditMode --> ViewMode: Click Cancel
 
-    AddWidget: ➕ Add Widget Modal
-    AddWidget: 1. Select widget type
-    AddWidget: 2. Configure widget
-    AddWidget: 3. Add to draftLayout
+    AddWidget: Add Widget Modal
+    AddWidget: 1 Select widget type
+    AddWidget: 2 Configure widget
+    AddWidget: 3 Add to draftLayout
     AddWidget --> EditMode: Widget added
 
-    ConfigureWidget: ⚙️ Configure Widget Modal
-    ConfigureWidget: Tabs:
-    ConfigureWidget: - Dimension (field + granularity)
-    ConfigureWidget: - Aggregate (operation + field)
-    ConfigureWidget: - Filter (conditions)
-    ConfigureWidget: - Style (colors, labels)
+    ConfigureWidget: Configure Widget Modal
+    ConfigureWidget: Dimension field + granularity
+    ConfigureWidget: Aggregate operation + field
+    ConfigureWidget: Filter conditions
+    ConfigureWidget: Style colors and labels
     ConfigureWidget --> EditMode: Save config
 
-    DragWidget: ↔️ Drag Widget
-    DragWidget: - Update x, y in draftLayout
-    DragWidget: - hasUnsavedChanges = true
+    DragWidget: Drag Widget
+    DragWidget: Update x y in draftLayout
+    DragWidget: hasUnsavedChanges true
     DragWidget --> EditMode: Drop complete
 
-    ResizeWidget: ↕️ Resize Widget
-    ResizeWidget: - Update width, height
-    ResizeWidget: - hasUnsavedChanges = true
+    ResizeWidget: Resize Widget
+    ResizeWidget: Update width and height
+    ResizeWidget: hasUnsavedChanges true
     ResizeWidget --> EditMode: Resize complete
 
-    DeleteWidget: 🗑️ Delete Widget
-    DeleteWidget: - Remove from draftLayout
-    DeleteWidget: - hasUnsavedChanges = true
+    DeleteWidget: Delete Widget
+    DeleteWidget: Remove from draftLayout
+    DeleteWidget: hasUnsavedChanges true
     DeleteWidget --> EditMode: Deleted
 
-    EditMode --> SaveFlow: Click "Save"
+    EditMode --> SaveFlow: Click Save
 
-    SaveFlow: 💾 Save Flow
-    SaveFlow: 1. Validate draftLayout
-    SaveFlow: 2. Call updateWithTabsAndWidgets
-    SaveFlow: 3. Differential processing
-    SaveFlow: 4. Database transaction
+    SaveFlow: Save Flow
+    SaveFlow: 1 Validate draftLayout
+    SaveFlow: 2 Call updateWithTabsAndWidgets
+    SaveFlow: 3 Differential processing
+    SaveFlow: 4 Database transaction
 
     SaveFlow --> SaveSuccess: Success
     SaveFlow --> SaveError: Error
 
-    SaveSuccess: ✅ Save Success
-    SaveSuccess: - persistedLayout = draftLayout
-    SaveSuccess: - draftLayout = null
-    SaveSuccess: - isEditMode = false
-    SaveSuccess: - hasUnsavedChanges = false
-    SaveSuccess: - Show success toast
+    SaveSuccess: Save Success
+    SaveSuccess: persistedLayout equals draftLayout
+    SaveSuccess: draftLayout null
+    SaveSuccess: isEditMode false
+    SaveSuccess: hasUnsavedChanges false
+    SaveSuccess: Show success toast
     SaveSuccess --> ViewMode: Exit edit mode
 
-    SaveError: ❌ Save Error
-    SaveError: - draftLayout retained
-    SaveError: - isEditMode = true
-    SaveError: - Show error toast
-    SaveError: - User can retry
+    SaveError: Save Error
+    SaveError: draftLayout retained
+    SaveError: isEditMode true
+    SaveError: Show error toast
+    SaveError: User can retry
     SaveError --> EditMode: Retry or fix
 `} />
           </div>
@@ -7293,8 +7292,8 @@ export const pageLayoutRouter = router({
     GroupByQuery --> DBQuery1[Execute: SELECT field, aggregate FROM table - WHERE filters GROUP BY field]
     AggregateQuery --> DBQuery2[Execute: SELECT aggregate FROM table - WHERE filters]
 
-    DBQuery1 --> RawResults[Raw Results: - GroupByResult[]]
-    DBQuery2 --> RawAgg[Raw Aggregate: - number]
+    DBQuery1 --> RawResults["Raw Results: GroupByResult array"]
+    DBQuery2 --> RawAgg[Raw Aggregate: number]
 
     RawResults --> Step1[Step 1: filterGroupByResults - Filter by range/null]
 
@@ -7310,8 +7309,8 @@ export const pageLayoutRouter = router({
     FillGaps --> Step5{Chart Type?}
     Skip4 --> Step5
 
-    Step5 -->|Bar| TransformBar[Step 5a: transformToBarChartData - Create BarDatum[] with keys]
-    Step5 -->|Line| TransformLine[Step 5b: transformToLineChartData - Create LineSeries[] with points]
+    Step5 -->|Bar| TransformBar["Step 5a: transformToBarChartData - Create BarDatum array with keys"]
+    Step5 -->|Line| TransformLine["Step 5b: transformToLineChartData - Create LineSeries array with points"]
     Step5 -->|Pie| TransformPie[Step 5c: transformToPieChartData - Calculate percentages]
 
     TransformBar --> ApplyColor1[Step 6: Apply Color Scheme - Map colors from COLOR_SCHEMES]
@@ -7322,9 +7321,9 @@ export const pageLayoutRouter = router({
     ApplyColor2 --> NivoFormat2[Step 7: Format for Nivo - Final LineChartData structure]
     ApplyColor3 --> NivoFormat3[Step 7: Format for Nivo - Final PieChartData structure]
 
-    NivoFormat1 --> RenderBar[Render ResponsiveBar - + Custom Totals Layer - + Custom Tooltip]
-    NivoFormat2 --> RenderLine[Render ResponsiveLine - + Custom Crosshair Layer - + Custom Tooltip]
-    NivoFormat3 --> RenderPie[Render ResponsivePie - + Arc Labels (percentages) - + Custom Tooltip]
+    NivoFormat1 --> RenderBar["Render ResponsiveBar + Custom Totals Layer + Custom Tooltip"]
+    NivoFormat2 --> RenderLine["Render ResponsiveLine + Custom Crosshair Layer + Custom Tooltip"]
+    NivoFormat3 --> RenderPie["Render ResponsivePie + Arc Labels with percentages + Custom Tooltip"]
 
     RawAgg --> FormatAgg[formatChartAggregateValue - Currency, number formatting]
     FormatAgg --> RenderAgg[Render AggregateChart - Big number + trend indicator]
@@ -7374,27 +7373,27 @@ export const pageLayoutRouter = router({
 
     subgraph StateData["State & Data Management"]
         Zustand[zustand: ^5.0.2 - State Management]
-        ReactQuery[@tanstack/react-query: ^5.59.0 - Server State & Caching]
+        ReactQuery["tanstack/react-query: ^5.59.0 - Server State & Caching"]
         Immer[immer: ^10.1.1 - Immutable Updates]
     end
 
     subgraph API["API & Validation"]
-        tRPC[@trpc/client: ^11.0.0 - Type-safe API Client]
-        tRPCReact[@trpc/react-query: ^11.0.0 - React Query Integration]
+        tRPC["trpc/client: ^11.0.0 - Type-safe API Client"]
+        tRPCReact["trpc/react-query: ^11.0.0 - React Query Integration"]
         Zod[zod: ^3.24.1 - Schema Validation]
     end
 
     subgraph Charts["Chart Libraries"]
-        NivoCore[@nivo/core: ^0.87.0 - Nivo Core]
-        NivoBar[@nivo/bar: ^0.87.0 - Bar Charts]
-        NivoLine[@nivo/line: ^0.87.0 - Line Charts]
-        NivoPie[@nivo/pie: ^0.87.0 - Pie Charts]
-        NivoRadial[@nivo/radial-bar: ^0.87.0 - Gauge Charts]
+        NivoCore["nivo/core: ^0.87.0 - Nivo Core"]
+        NivoBar["nivo/bar: ^0.87.0 - Bar Charts"]
+        NivoLine["nivo/line: ^0.87.0 - Line Charts"]
+        NivoPie["nivo/pie: ^0.87.0 - Pie Charts"]
+        NivoRadial["nivo/radial-bar: ^0.87.0 - Gauge Charts"]
     end
 
     subgraph Layout["Layout & Grid"]
         RGL[react-grid-layout: ^1.5.0 - Drag & Drop Grid]
-        RGLTypes[@types/react-grid-layout: ^1.3.5 - TypeScript Types]
+        RGLTypes["types/react-grid-layout: ^1.3.5 - TypeScript Types"]
     end
 
     subgraph Utils["Utility Libraries"]
@@ -7404,7 +7403,7 @@ export const pageLayoutRouter = router({
     end
 
     subgraph Backend["Backend (Supabase)"]
-        Supabase[@supabase/supabase-js: ^2.47.10 - Supabase Client]
+        Supabase["supabase/supabase-js: ^2.47.10 - Supabase Client"]
         PostgreSQL[PostgreSQL: 15+ - Database]
         PostgREST[PostgREST - Auto-generated REST API]
     end
