@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Menu, X, Box, Layers, Database, Code, Palette,
   Layout, Cpu, GitBranch, Terminal,
@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { DocStatus, PackageMeta, PackageDocs } from './types';
 import { PACKAGES, DOCS_MAP } from './data/content';
+import { searchDocumentation, SearchResult } from './utils/searchUtils';
 
 // --- Components ---
 
@@ -86,6 +87,51 @@ const NavSection = ({ title, children }: { title: string, children: React.ReactN
   </div>
 );
 
+const SearchResults = ({
+  results,
+  onSelect,
+  onClose
+}: {
+  results: SearchResult[],
+  onSelect: (packageId: string, sectionKey: keyof PackageDocs) => void,
+  onClose: () => void
+}) => {
+  if (results.length === 0) return null;
+
+  return (
+    <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-border rounded-sm shadow-lg max-h-96 overflow-y-auto z-50">
+      <div className="p-2 border-b border-border flex items-center justify-between sticky top-0 bg-white">
+        <span className="text-xs font-mono text-zinc-500">{results.length} result{results.length !== 1 ? 's' : ''} found</span>
+        <button onClick={onClose} className="text-zinc-400 hover:text-zinc-900">
+          <X size={14} />
+        </button>
+      </div>
+      <div className="p-1">
+        {results.map((result, idx) => (
+          <button
+            key={`${result.packageId}-${result.sectionKey}-${idx}`}
+            onClick={() => {
+              onSelect(result.packageId, result.sectionKey);
+              onClose();
+            }}
+            className="w-full text-left p-3 hover:bg-zinc-50 rounded-sm transition-colors"
+          >
+            <div className="flex items-center gap-2 mb-1">
+              <span className="font-mono text-xs font-bold text-zinc-900">{result.packageName}</span>
+              <ChevronRight size={10} className="text-zinc-400" />
+              <span className="text-xs text-zinc-500">{result.sectionTitle}</span>
+              {result.matchCount > 1 && (
+                <span className="ml-auto text-[10px] text-zinc-400 font-mono">{result.matchCount} matches</span>
+              )}
+            </div>
+            <p className="text-xs text-zinc-600 line-clamp-2">{result.snippet}</p>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 // --- Main App ---
 
 export default function App() {
@@ -93,6 +139,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<keyof PackageDocs>('overview');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showSearchResults, setShowSearchResults] = useState(false);
 
   const activePkg = PACKAGES.find(p => p.id === activePkgId) || PACKAGES[0];
 
@@ -100,14 +147,32 @@ export default function App() {
   const pkgDocs = DOCS_MAP[activePkgId] || EMPTY_DOCS;
   const activeContent = pkgDocs[activeTab] || { title: "Not Found", content: "Section not found" };
 
-  // Filter packages based on search query
-  const filteredPackages = PACKAGES.filter(pkg =>
-    pkg.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    pkg.description.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Search documentation content
+  const contentSearchResults = useMemo(() => {
+    if (searchQuery.trim().length >= 2) {
+      return searchDocumentation(searchQuery, PACKAGES, DOCS_MAP);
+    }
+    return [];
+  }, [searchQuery]);
+
+  // Filter packages based on search query (for sidebar)
+  const filteredPackages = searchQuery.trim().length < 2
+    ? PACKAGES
+    : PACKAGES.filter(pkg =>
+        pkg.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        pkg.description.toLowerCase().includes(searchQuery.toLowerCase())
+      );
 
   const prodPackages = filteredPackages.filter(p => p.status === 'prod');
   const proposedPackages = filteredPackages.filter(p => p.status === 'proposed');
+
+  const handleSearchResultSelect = (packageId: string, sectionKey: keyof PackageDocs) => {
+    setActivePkgId(packageId);
+    setActiveTab(sectionKey);
+    setSearchQuery('');
+    setShowSearchResults(false);
+    setMobileMenuOpen(false);
+  };
 
   return (
     <div className="flex h-screen overflow-hidden bg-white text-zinc-900 font-sans">
@@ -139,14 +204,25 @@ export default function App() {
         {/* Search */}
         <div className="px-4 pt-4">
            <div className="relative group">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 group-hover:text-zinc-600 transition-colors" size={14} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 group-hover:text-zinc-600 transition-colors z-10" size={14} />
             <input
               type="text"
-              placeholder="Search packages..."
+              placeholder="Search packages & content..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setShowSearchResults(true);
+              }}
+              onFocus={() => setShowSearchResults(true)}
               className="w-full bg-white border border-border rounded-sm py-2 pl-9 pr-4 text-xs font-medium placeholder:text-zinc-400 focus:outline-none focus:border-zinc-400 transition-all font-mono"
             />
+            {showSearchResults && contentSearchResults.length > 0 && (
+              <SearchResults
+                results={contentSearchResults}
+                onSelect={handleSearchResultSelect}
+                onClose={() => setShowSearchResults(false)}
+              />
+            )}
           </div>
         </div>
 

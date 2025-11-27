@@ -5965,14 +5965,14 @@ export const pageLayoutRouter = router({
             <Mermaid chart={`sequenceDiagram
     participant User
     participant UI as DashboardEditControls
-    participant Store as PageLayoutStore (Zustand)
+    participant Store as PageLayoutStore
     participant Hook as useSavePageLayout
     participant tRPC as tRPC Router
-    participant Service as PageLayoutUpdateService
+    participant Service as UpdateService
     participant DB as PostgreSQL
     participant Renderer as PageLayoutRenderer
     participant Widget as WidgetRenderer
-    participant Chart as BarChart (Nivo)
+    participant Chart as BarChart
 
     Note over User,Chart: 1. EDIT MODE FLOW
     User->>UI: Click "Edit Dashboard"
@@ -5990,13 +5990,13 @@ export const pageLayoutRouter = router({
     Store-->>UI: State updated
     UI-->>User: Show new widget (in draft)
 
-    Note over User,Chart: 3. SAVE FLOW (BULK UPDATE)
+    Note over User,Chart: 3. SAVE FLOW - BULK UPDATE
     User->>UI: Click "Save"
-    UI->>Hook: mutateAsync({ id, tabs })
-    Hook->>tRPC: pageLayout.updateWithTabsAndWidgets
+    UI->>Hook: mutateAsync with id and tabs
+    Hook->>tRPC: updateWithTabsAndWidgets
 
-    tRPC->>tRPC: Validate with Zod (UpdatePageLayoutSchema)
-    tRPC->>Service: updateWithTabsAndWidgets(input)
+    tRPC->>tRPC: Validate with Zod schema
+    tRPC->>Service: Call updateWithTabsAndWidgets
 
     Service->>DB: SELECT existing layout with tabs & widgets
     DB-->>Service: Current state
@@ -6027,18 +6027,18 @@ export const pageLayoutRouter = router({
     Store-->>UI: State updated
     UI-->>User: Show success toast
 
-    Note over User,Chart: 4. RENDER FLOW (CHART WIDGET)
+    Note over User,Chart: 4. RENDER FLOW - CHART WIDGET
     User->>Renderer: View dashboard
     Renderer->>Store: Get persistedLayout
     Store-->>Renderer: Layout data
 
     Renderer->>Widget: Render GRAPH widget
-    Widget->>Widget: Route by type (GRAPH)
-    Widget->>Chart: <BarChart config={widget.configuration} />
+    Widget->>Widget: Route by type GRAPH
+    Widget->>Chart: Render BarChart component
 
-    Chart->>Hook: useChartData({ dimension, aggregate, filter })
-    Hook->>Hook: useGraphWidgetQuery (dynamic GraphQL)
-    Hook->>tRPC: data.groupBy({ fieldId, operation, filters })
+    Chart->>Hook: useChartData with config
+    Hook->>Hook: useGraphWidgetQuery dynamic
+    Hook->>tRPC: data.groupBy with params
 
     tRPC->>DB: SELECT with aggregation + grouping
     DB-->>tRPC: Raw group-by results
@@ -6055,11 +6055,11 @@ export const pageLayoutRouter = router({
 
     Note over User,Chart: 5. DRILLDOWN FLOW
     User->>Chart: Click bar
-    Chart->>Chart: Extract datum.indexValue
-    Chart->>Chart: Lookup raw value (formattedToRawLookup)
+    Chart->>Chart: Extract datum indexValue
+    Chart->>Chart: Lookup raw value
     Chart->>Chart: Build filter query params
-    Chart->>UI: router.push(/objects/opp?filter=...)
-    UI-->>User: Navigate to filtered record list
+    Chart->>UI: Navigate to filtered view
+    UI-->>User: Show filtered record list
 `} />
           </div>
 
@@ -6414,21 +6414,21 @@ export const pageLayoutRouter = router({
     }
 
     class Filter {
-        +Record~string, FilterValue~ filters
+        +object filters
     }
 
     class FilterValue {
-        +any? eq
-        +any? ne
-        +any? gt
-        +any? gte
-        +any? lt
-        +any? lte
-        +any[]? in
-        +any[]? notIn
-        +string? contains
-        +string? startsWith
-        +string? endsWith
+        +any eq
+        +any ne
+        +any gt
+        +any gte
+        +any lt
+        +any lte
+        +array in
+        +array notIn
+        +string contains
+        +string startsWith
+        +string endsWith
     }
 
     class ChartType {
@@ -6499,7 +6499,7 @@ export const pageLayoutRouter = router({
 
     class BarDatum {
         +string x
-        +Record~string, number~ values
+        +object values
         +number total
     }
 
