@@ -10,9 +10,11 @@
     "preview": "vite preview",
     "electron:dev": "concurrently \"cross-env NODE_ENV=development vite --port 5175\" \"wait-on http://localhost:5175 && cross-env NODE_ENV=development VITE_DEV_SERVER_URL=http://localhost:5175 electron .\"",
     "electron:build": "vite build && electron-builder build --mac",
-    "electron:package": "vite build && electron-builder build --mac --dir"
+    "electron:package": "vite build && electron-builder build --mac --dir",
+    "mcp": "tsx mcp-server/index.ts"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.23.0",
     "lucide-react": "^0.555.0",
     "mermaid": "^11.12.1",
     "react": "^19.2.0",
@@ -25,6 +27,7 @@
     "cross-env": "^10.1.0",
     "electron": "^39.2.4",
     "electron-builder": "^26.0.12",
+    "tsx": "^4.20.6",
     "typescript": "~5.8.2",
     "vite": "^6.2.0",
     "wait-on": "^9.0.3"

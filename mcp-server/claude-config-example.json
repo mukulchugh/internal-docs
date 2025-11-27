@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "quivly-docs": {
+      "command": "pnpm",
+      "args": ["mcp"],
+      "cwd": "/Users/mukulchugh/Quivly/Resources/Docs/internal-docs"
+    }
+  }
+}
