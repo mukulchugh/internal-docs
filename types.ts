@@ -31,5 +31,8 @@ export interface PackageDocs {
   overview: DocSection;
   architecture: DocSection;
   api: DocSection;
-  plan: DocSection;
+  hooks?: DocSection;
+  state?: DocSection;
+  features?: DocSection;
+  styles?: DocSection;
 }

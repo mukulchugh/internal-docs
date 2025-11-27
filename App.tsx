@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { 
-  Menu, X, Box, Layers, Zap, Database, Code, 
-  Layout, Cpu, Share2, GitBranch, Terminal, 
+import {
+  Menu, X, Box, Layers, Database, Code, Palette,
+  Layout, Cpu, GitBranch, Terminal,
   ChevronRight, Search, FileText, Activity, AlertCircle, CheckCircle2
 } from 'lucide-react';
 import { DocStatus, PackageMeta, PackageDocs } from './types';
@@ -174,7 +174,10 @@ export default function App() {
                   { id: 'overview', label: 'Overview', icon: Layout },
                   { id: 'architecture', label: 'Architecture', icon: Cpu },
                   { id: 'api', label: 'API Reference', icon: Terminal },
-                  { id: 'plan', label: 'Implementation', icon: Share2 },
+                  { id: 'hooks', label: 'Hooks Reference', icon: Code },
+                  { id: 'state', label: 'State Management', icon: Database },
+                  { id: 'features', label: 'Advanced Features', icon: Layers },
+                  { id: 'styles', label: 'UI & Styles', icon: Palette },
                 ].map(item => (
                   <button 
                     key={item.id}
