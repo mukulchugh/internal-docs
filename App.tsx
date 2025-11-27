@@ -118,6 +118,11 @@ export default function App() {
         flex flex-col transition-transform duration-300 md:translate-x-0
         ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
+        {/* Mac Title Bar Safe Area */}
+        <div className="h-12 bg-white border-b border-border flex items-end pb-2 px-5" style={{ WebkitAppRegion: 'drag' } as any}>
+          <div className="text-[10px] text-zinc-400 font-mono font-semibold">QUIVLY DOCS</div>
+        </div>
+
         {/* Header */}
         <div className="p-5 border-b border-border bg-white">
           <div className="flex items-center gap-3 mb-1">
@@ -135,9 +140,11 @@ export default function App() {
         <div className="px-4 pt-4">
            <div className="relative group">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 group-hover:text-zinc-600 transition-colors" size={14} />
-            <input 
-              type="text" 
-              placeholder="Search packages..." 
+            <input
+              type="text"
+              placeholder="Search packages..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full bg-white border border-border rounded-sm py-2 pl-9 pr-4 text-xs font-medium placeholder:text-zinc-400 focus:outline-none focus:border-zinc-400 transition-all font-mono"
             />
           </div>
@@ -215,6 +222,9 @@ export default function App() {
       <main className="flex-1 relative overflow-hidden flex flex-col bg-white">
         {/* Background Grid */}
         <div className="absolute inset-0 bg-grid z-0 pointer-events-none opacity-[0.4]"></div>
+
+        {/* Mac Title Bar Safe Area for Main Content */}
+        <div className="hidden md:block h-12 bg-white/80 backdrop-blur-sm border-b border-border/50 z-40 relative" style={{ WebkitAppRegion: 'drag' } as any}></div>
 
         {/* Top Bar (Mobile) */}
         <div className="md:hidden flex items-center justify-between p-4 border-b border-border bg-white z-40 relative">
