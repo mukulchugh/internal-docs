@@ -5111,6 +5111,639 @@ export function PieChart({ data, configuration, onSliceClick }: PieChartProps) {
       )
     },
 
+    'database-schema': {
+      title: "Complete Database Schema",
+      content: (
+        <>
+          <h3 className="text-lg font-bold text-zinc-900 font-mono mb-4">Overview</h3>
+          <div className="bg-zinc-50 border border-border p-4 rounded-sm mb-8">
+            <p className="text-sm text-zinc-600 mb-4">
+              Complete PostgreSQL database schema for the dashboard system. Includes all tables, columns, constraints,
+              indexes, triggers, and Row-Level Security (RLS) policies. Designed for Supabase but compatible with any PostgreSQL 15+ database.
+            </p>
+            <div className="grid grid-cols-4 gap-4 mt-4">
+              <StatCard value="4" label="Core Tables" />
+              <StatCard value="8" label="Indexes" />
+              <StatCard value="3" label="Triggers" />
+              <StatCard value="12" label="RLS Policies" />
+            </div>
+          </div>
+
+          <h3 className="text-lg font-bold text-zinc-900 font-mono mb-4 mt-8">Migration 001: page_layouts Table</h3>
+
+          <ApiSection
+            name="Create page_layouts Table"
+            type="migration"
+            description="Main table storing dashboard layout configurations"
+          >
+            <div className="space-y-4">
+              <div className="bg-white border border-border p-4 rounded-sm">
+                <CodeBlock language="sql" code={`-- Migration: 001_create_page_layouts.sql
+-- Description: Create page_layouts table for storing dashboard configurations
+-- Dependencies: workspaces, object_metadata tables must exist
+
+CREATE TABLE IF NOT EXISTS page_layouts (
+  -- Primary Key
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+  -- Foreign Keys
+  workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  object_metadata_id UUID NOT NULL REFERENCES object_metadata(id) ON DELETE CASCADE,
+
+  -- Layout Configuration
+  name TEXT NOT NULL CHECK (name != ''),
+  layout_type TEXT NOT NULL CHECK (layout_type IN ('grid', 'vertical-list', 'canvas', 'side-column')),
+  icon TEXT,
+  is_default BOOLEAN DEFAULT FALSE,
+
+  -- Timestamps
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  deleted_at TIMESTAMPTZ,
+
+  -- Constraints
+  CONSTRAINT unique_layout_per_workspace_object
+    UNIQUE (workspace_id, object_metadata_id, name, deleted_at),
+
+  CONSTRAINT valid_name
+    CHECK (length(trim(name)) > 0),
+
+  CONSTRAINT valid_layout_type
+    CHECK (layout_type IN ('grid', 'vertical-list', 'canvas', 'side-column'))
+);
+
+-- Comments for documentation
+COMMENT ON TABLE page_layouts IS 'Stores dashboard layout configurations for different objects';
+COMMENT ON COLUMN page_layouts.id IS 'Unique identifier for the layout';
+COMMENT ON COLUMN page_layouts.workspace_id IS 'Foreign key to workspaces table for multi-tenancy';
+COMMENT ON COLUMN page_layouts.object_metadata_id IS 'Foreign key to object_metadata - which object this layout is for';
+COMMENT ON COLUMN page_layouts.name IS 'Human-readable name for the layout (e.g., "Sales Dashboard")';
+COMMENT ON COLUMN page_layouts.layout_type IS 'Layout rendering mode: grid (12-col), vertical-list (stack), canvas (free), side-column (pinned)';
+COMMENT ON COLUMN page_layouts.icon IS 'Optional icon name from icon library (e.g., "BarChart", "TrendingUp")';
+COMMENT ON COLUMN page_layouts.is_default IS 'Whether this is the default layout for the object';
+COMMENT ON COLUMN page_layouts.deleted_at IS 'Soft delete timestamp - NULL means active';
+
+-- Indexes
+CREATE INDEX idx_page_layouts_workspace
+  ON page_layouts(workspace_id)
+  WHERE deleted_at IS NULL;
+
+CREATE INDEX idx_page_layouts_object
+  ON page_layouts(object_metadata_id)
+  WHERE deleted_at IS NULL;
+
+CREATE INDEX idx_page_layouts_default
+  ON page_layouts(workspace_id, object_metadata_id, is_default)
+  WHERE deleted_at IS NULL AND is_default = TRUE;
+
+COMMENT ON INDEX idx_page_layouts_workspace IS 'Fast lookup of layouts by workspace';
+COMMENT ON INDEX idx_page_layouts_object IS 'Fast lookup of layouts by object type';
+COMMENT ON INDEX idx_page_layouts_default IS 'Fast lookup of default layout per workspace + object';`} />
+              </div>
+            </div>
+          </ApiSection>
+
+          <h3 className="text-lg font-bold text-zinc-900 font-mono mb-4 mt-8">Migration 002: page_layout_tabs Table</h3>
+
+          <ApiSection
+            name="Create page_layout_tabs Table"
+            type="migration"
+            description="Tabs within a dashboard layout for organizing widgets"
+          >
+            <div className="space-y-4">
+              <div className="bg-white border border-border p-4 rounded-sm">
+                <CodeBlock language="sql" code={`-- Migration: 002_create_page_layout_tabs.sql
+-- Description: Create page_layout_tabs table for tab organization
+-- Dependencies: page_layouts table must exist
+
+CREATE TABLE IF NOT EXISTS page_layout_tabs (
+  -- Primary Key
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+  -- Foreign Key
+  page_layout_id UUID NOT NULL REFERENCES page_layouts(id) ON DELETE CASCADE,
+
+  -- Tab Configuration
+  name TEXT NOT NULL CHECK (name != ''),
+  icon TEXT,
+  position INTEGER NOT NULL CHECK (position >= 0),
+
+  -- Timestamps
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  deleted_at TIMESTAMPTZ,
+
+  -- Constraints
+  CONSTRAINT unique_tab_position
+    UNIQUE (page_layout_id, position, deleted_at),
+
+  CONSTRAINT valid_tab_name
+    CHECK (length(trim(name)) > 0),
+
+  CONSTRAINT valid_position
+    CHECK (position >= 0 AND position < 100)
+);
+
+-- Comments
+COMMENT ON TABLE page_layout_tabs IS 'Tabs for organizing widgets within a layout';
+COMMENT ON COLUMN page_layout_tabs.id IS 'Unique identifier for the tab';
+COMMENT ON COLUMN page_layout_tabs.page_layout_id IS 'Foreign key to parent page_layout';
+COMMENT ON COLUMN page_layout_tabs.name IS 'Tab name displayed in UI (e.g., "Overview", "Analytics")';
+COMMENT ON COLUMN page_layout_tabs.icon IS 'Optional icon for the tab';
+COMMENT ON COLUMN page_layout_tabs.position IS 'Zero-based position for tab ordering (0 = first tab)';
+COMMENT ON COLUMN page_layout_tabs.deleted_at IS 'Soft delete timestamp';
+
+-- Indexes
+CREATE INDEX idx_page_layout_tabs_layout
+  ON page_layout_tabs(page_layout_id)
+  WHERE deleted_at IS NULL;
+
+CREATE INDEX idx_page_layout_tabs_position
+  ON page_layout_tabs(page_layout_id, position)
+  WHERE deleted_at IS NULL;
+
+COMMENT ON INDEX idx_page_layout_tabs_layout IS 'Fast lookup of tabs by parent layout';
+COMMENT ON INDEX idx_page_layout_tabs_position IS 'Fast ordered retrieval of tabs';`} />
+              </div>
+            </div>
+          </ApiSection>
+
+          <h3 className="text-lg font-bold text-zinc-900 font-mono mb-4 mt-8">Migration 003: page_layout_widgets Table</h3>
+
+          <ApiSection
+            name="Create page_layout_widgets Table"
+            type="migration"
+            description="Individual widgets with configuration and grid position"
+          >
+            <div className="space-y-4">
+              <div className="bg-white border border-border p-4 rounded-sm">
+                <CodeBlock language="sql" code={`-- Migration: 003_create_page_layout_widgets.sql
+-- Description: Create page_layout_widgets table for widget instances
+-- Dependencies: page_layout_tabs table must exist
+
+CREATE TABLE IF NOT EXISTS page_layout_widgets (
+  -- Primary Key
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+  -- Foreign Key
+  page_layout_tab_id UUID NOT NULL REFERENCES page_layout_tabs(id) ON DELETE CASCADE,
+
+  -- Widget Type
+  type TEXT NOT NULL CHECK (type IN (
+    'GRAPH', 'VIEW', 'IFRAME', 'FIELDS', 'TIMELINE', 'TASKS', 'NOTES',
+    'FILES', 'EMAILS', 'CALENDAR', 'RICH_TEXT', 'WORKFLOW',
+    'WORKFLOW_VERSION', 'WORKFLOW_RUN'
+  )),
+
+  -- Grid Position (12-column grid, 0-based)
+  x INTEGER NOT NULL CHECK (x >= 0 AND x < 12),
+  y INTEGER NOT NULL CHECK (y >= 0),
+  width INTEGER NOT NULL CHECK (width > 0 AND width <= 12),
+  height INTEGER NOT NULL CHECK (height > 0 AND height <= 100),
+
+  -- Widget Configuration (JSONB for flexibility)
+  configuration JSONB NOT NULL DEFAULT '{}'::jsonb,
+
+  -- Conditional Display (JSON Logic)
+  display_condition JSONB,
+
+  -- Timestamps
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  deleted_at TIMESTAMPTZ,
+
+  -- Constraints
+  CONSTRAINT valid_widget_type
+    CHECK (type IN (
+      'GRAPH', 'VIEW', 'IFRAME', 'FIELDS', 'TIMELINE', 'TASKS', 'NOTES',
+      'FILES', 'EMAILS', 'CALENDAR', 'RICH_TEXT', 'WORKFLOW',
+      'WORKFLOW_VERSION', 'WORKFLOW_RUN'
+    )),
+
+  CONSTRAINT valid_grid_position
+    CHECK (x >= 0 AND x < 12 AND y >= 0),
+
+  CONSTRAINT valid_grid_dimensions
+    CHECK (width > 0 AND width <= 12 AND height > 0 AND height <= 100),
+
+  CONSTRAINT valid_grid_bounds
+    CHECK (x + width <= 12),
+
+  CONSTRAINT valid_configuration
+    CHECK (jsonb_typeof(configuration) = 'object'),
+
+  CONSTRAINT widget_must_have_title
+    CHECK ((configuration->>'title') IS NOT NULL)
+);
+
+-- Comments
+COMMENT ON TABLE page_layout_widgets IS 'Individual widget instances with configuration';
+COMMENT ON COLUMN page_layout_widgets.id IS 'Unique identifier for the widget';
+COMMENT ON COLUMN page_layout_widgets.page_layout_tab_id IS 'Foreign key to parent tab';
+COMMENT ON COLUMN page_layout_widgets.type IS 'Widget type determining which component to render';
+COMMENT ON COLUMN page_layout_widgets.x IS 'Grid X position (0-11 in 12-column grid)';
+COMMENT ON COLUMN page_layout_widgets.y IS 'Grid Y position (0-based, no max)';
+COMMENT ON COLUMN page_layout_widgets.width IS 'Grid width (1-12 columns)';
+COMMENT ON COLUMN page_layout_widgets.height IS 'Grid height in rows (1-100)';
+COMMENT ON COLUMN page_layout_widgets.configuration IS 'Widget-specific configuration as JSON (chart config, view ID, etc.)';
+COMMENT ON COLUMN page_layout_widgets.display_condition IS 'Optional JSON Logic expression for conditional display';
+COMMENT ON COLUMN page_layout_widgets.deleted_at IS 'Soft delete timestamp';
+
+-- Indexes
+CREATE INDEX idx_page_layout_widgets_tab
+  ON page_layout_widgets(page_layout_tab_id)
+  WHERE deleted_at IS NULL;
+
+CREATE INDEX idx_page_layout_widgets_type
+  ON page_layout_widgets(type)
+  WHERE deleted_at IS NULL;
+
+CREATE INDEX idx_page_layout_widgets_position
+  ON page_layout_widgets(page_layout_tab_id, y, x)
+  WHERE deleted_at IS NULL;
+
+-- GIN index for JSONB configuration (enables fast JSON queries)
+CREATE INDEX idx_page_layout_widgets_config_gin
+  ON page_layout_widgets USING gin(configuration)
+  WHERE deleted_at IS NULL;
+
+-- GIN index for display conditions
+CREATE INDEX idx_page_layout_widgets_display_condition_gin
+  ON page_layout_widgets USING gin(display_condition)
+  WHERE deleted_at IS NULL AND display_condition IS NOT NULL;
+
+COMMENT ON INDEX idx_page_layout_widgets_tab IS 'Fast lookup of widgets by parent tab';
+COMMENT ON INDEX idx_page_layout_widgets_type IS 'Fast filtering by widget type';
+COMMENT ON INDEX idx_page_layout_widgets_position IS 'Fast ordered retrieval by position';
+COMMENT ON INDEX idx_page_layout_widgets_config_gin IS 'Fast JSON queries on configuration (e.g., find all bar charts)';
+COMMENT ON INDEX idx_page_layout_widgets_display_condition_gin IS 'Fast queries on conditional display rules';`} />
+              </div>
+            </div>
+          </ApiSection>
+
+          <h3 className="text-lg font-bold text-zinc-900 font-mono mb-4 mt-8">Migration 004: Triggers & Functions</h3>
+
+          <ApiSection
+            name="Create Triggers for updated_at"
+            type="migration"
+            description="Automatically update timestamps on record changes"
+          >
+            <div className="space-y-4">
+              <div className="bg-white border border-border p-4 rounded-sm">
+                <CodeBlock language="sql" code={`-- Migration: 004_create_triggers.sql
+-- Description: Create triggers for automatic timestamp updates
+-- Dependencies: All tables created
+
+-- Function to update updated_at timestamp
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+COMMENT ON FUNCTION update_updated_at_column IS 'Automatically sets updated_at to current timestamp';
+
+-- Trigger for page_layouts
+CREATE TRIGGER update_page_layouts_updated_at
+  BEFORE UPDATE ON page_layouts
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+COMMENT ON TRIGGER update_page_layouts_updated_at ON page_layouts IS 'Auto-update updated_at on row modification';
+
+-- Trigger for page_layout_tabs
+CREATE TRIGGER update_page_layout_tabs_updated_at
+  BEFORE UPDATE ON page_layout_tabs
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+COMMENT ON TRIGGER update_page_layout_tabs_updated_at ON page_layout_tabs IS 'Auto-update updated_at on row modification';
+
+-- Trigger for page_layout_widgets
+CREATE TRIGGER update_page_layout_widgets_updated_at
+  BEFORE UPDATE ON page_layout_widgets
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+COMMENT ON TRIGGER update_page_layout_widgets_updated_at ON page_layout_widgets IS 'Auto-update updated_at on row modification';`} />
+              </div>
+            </div>
+          </ApiSection>
+
+          <h3 className="text-lg font-bold text-zinc-900 font-mono mb-4 mt-8">Migration 005: Row-Level Security Policies</h3>
+
+          <ApiSection
+            name="Enable RLS and Create Policies"
+            type="migration"
+            description="Multi-tenant security with workspace isolation"
+          >
+            <div className="space-y-4">
+              <div className="bg-white border border-border p-4 rounded-sm">
+                <CodeBlock language="sql" code={`-- Migration: 005_enable_rls.sql
+-- Description: Enable Row-Level Security and create policies
+-- Dependencies: All tables and workspace_members table
+
+-- Enable RLS on all tables
+ALTER TABLE page_layouts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE page_layout_tabs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE page_layout_widgets ENABLE ROW LEVEL SECURITY;
+
+-- ===========================
+-- PAGE_LAYOUTS POLICIES
+-- ===========================
+
+-- Policy: Users can view layouts in their workspaces
+CREATE POLICY "Users can view their workspace layouts"
+  ON page_layouts
+  FOR SELECT
+  USING (
+    workspace_id IN (
+      SELECT workspace_id
+      FROM workspace_members
+      WHERE user_id = auth.uid()
+    )
+    AND deleted_at IS NULL
+  );
+
+COMMENT ON POLICY "Users can view their workspace layouts" ON page_layouts IS
+  'Allow users to view layouts from workspaces they belong to';
+
+-- Policy: Admins/owners can insert layouts
+CREATE POLICY "Admins can create layouts"
+  ON page_layouts
+  FOR INSERT
+  WITH CHECK (
+    workspace_id IN (
+      SELECT workspace_id
+      FROM workspace_members
+      WHERE user_id = auth.uid()
+      AND role IN ('admin', 'owner')
+    )
+  );
+
+COMMENT ON POLICY "Admins can create layouts" ON page_layouts IS
+  'Only workspace admins/owners can create new layouts';
+
+-- Policy: Admins/owners can update layouts
+CREATE POLICY "Admins can update layouts"
+  ON page_layouts
+  FOR UPDATE
+  USING (
+    workspace_id IN (
+      SELECT workspace_id
+      FROM workspace_members
+      WHERE user_id = auth.uid()
+      AND role IN ('admin', 'owner')
+    )
+    AND deleted_at IS NULL
+  )
+  WITH CHECK (
+    workspace_id IN (
+      SELECT workspace_id
+      FROM workspace_members
+      WHERE user_id = auth.uid()
+      AND role IN ('admin', 'owner')
+    )
+  );
+
+COMMENT ON POLICY "Admins can update layouts" ON page_layouts IS
+  'Only workspace admins/owners can update layouts';
+
+-- Policy: Admins/owners can soft-delete layouts
+CREATE POLICY "Admins can delete layouts"
+  ON page_layouts
+  FOR UPDATE
+  USING (
+    workspace_id IN (
+      SELECT workspace_id
+      FROM workspace_members
+      WHERE user_id = auth.uid()
+      AND role IN ('admin', 'owner')
+    )
+  )
+  WITH CHECK (deleted_at IS NOT NULL);
+
+COMMENT ON POLICY "Admins can delete layouts" ON page_layouts IS
+  'Only workspace admins/owners can soft-delete layouts';
+
+-- ===========================
+-- PAGE_LAYOUT_TABS POLICIES
+-- ===========================
+
+-- Policy: Users can view tabs from their workspace layouts
+CREATE POLICY "Users can view tabs from their workspace layouts"
+  ON page_layout_tabs
+  FOR SELECT
+  USING (
+    page_layout_id IN (
+      SELECT id
+      FROM page_layouts
+      WHERE workspace_id IN (
+        SELECT workspace_id
+        FROM workspace_members
+        WHERE user_id = auth.uid()
+      )
+      AND deleted_at IS NULL
+    )
+    AND deleted_at IS NULL
+  );
+
+-- Policy: Admins can insert tabs
+CREATE POLICY "Admins can create tabs"
+  ON page_layout_tabs
+  FOR INSERT
+  WITH CHECK (
+    page_layout_id IN (
+      SELECT id
+      FROM page_layouts
+      WHERE workspace_id IN (
+        SELECT workspace_id
+        FROM workspace_members
+        WHERE user_id = auth.uid()
+        AND role IN ('admin', 'owner')
+      )
+      AND deleted_at IS NULL
+    )
+  );
+
+-- Policy: Admins can update tabs
+CREATE POLICY "Admins can update tabs"
+  ON page_layout_tabs
+  FOR UPDATE
+  USING (
+    page_layout_id IN (
+      SELECT id
+      FROM page_layouts
+      WHERE workspace_id IN (
+        SELECT workspace_id
+        FROM workspace_members
+        WHERE user_id = auth.uid()
+        AND role IN ('admin', 'owner')
+      )
+      AND deleted_at IS NULL
+    )
+    AND deleted_at IS NULL
+  );
+
+-- ===========================
+-- PAGE_LAYOUT_WIDGETS POLICIES
+-- ===========================
+
+-- Policy: Users can view widgets from their workspace layouts
+CREATE POLICY "Users can view widgets from their workspace layouts"
+  ON page_layout_widgets
+  FOR SELECT
+  USING (
+    page_layout_tab_id IN (
+      SELECT t.id
+      FROM page_layout_tabs t
+      JOIN page_layouts l ON l.id = t.page_layout_id
+      WHERE l.workspace_id IN (
+        SELECT workspace_id
+        FROM workspace_members
+        WHERE user_id = auth.uid()
+      )
+      AND t.deleted_at IS NULL
+      AND l.deleted_at IS NULL
+    )
+    AND deleted_at IS NULL
+  );
+
+-- Policy: Admins can insert widgets
+CREATE POLICY "Admins can create widgets"
+  ON page_layout_widgets
+  FOR INSERT
+  WITH CHECK (
+    page_layout_tab_id IN (
+      SELECT t.id
+      FROM page_layout_tabs t
+      JOIN page_layouts l ON l.id = t.page_layout_id
+      WHERE l.workspace_id IN (
+        SELECT workspace_id
+        FROM workspace_members
+        WHERE user_id = auth.uid()
+        AND role IN ('admin', 'owner')
+      )
+      AND t.deleted_at IS NULL
+      AND l.deleted_at IS NULL
+    )
+  );
+
+-- Policy: Admins can update widgets
+CREATE POLICY "Admins can update widgets"
+  ON page_layout_widgets
+  FOR UPDATE
+  USING (
+    page_layout_tab_id IN (
+      SELECT t.id
+      FROM page_layout_tabs t
+      JOIN page_layouts l ON l.id = t.page_layout_id
+      WHERE l.workspace_id IN (
+        SELECT workspace_id
+        FROM workspace_members
+        WHERE user_id = auth.uid()
+        AND role IN ('admin', 'owner')
+      )
+      AND t.deleted_at IS NULL
+      AND l.deleted_at IS NULL
+    )
+    AND deleted_at IS NULL
+  );
+
+COMMENT ON POLICY "Users can view widgets from their workspace layouts" ON page_layout_widgets IS
+  'Inherit workspace access from parent layout through tabs';
+
+COMMENT ON POLICY "Admins can create widgets" ON page_layout_widgets IS
+  'Only workspace admins/owners can create widgets';
+
+COMMENT ON POLICY "Admins can update widgets" ON page_layout_widgets IS
+  'Only workspace admins/owners can update widgets';`} />
+              </div>
+            </div>
+          </ApiSection>
+
+          <h3 className="text-lg font-bold text-zinc-900 font-mono mb-4 mt-8">Complete Schema Reference</h3>
+
+          <div className="bg-white border border-border p-4 rounded-sm mb-8">
+            <h4 className="font-mono font-bold text-sm mb-4">Table Relationships</h4>
+            <div className="space-y-3 text-sm">
+              <div className="flex items-start gap-3">
+                <span className="text-blue-600 font-mono">workspaces</span>
+                <span className="text-zinc-400">→</span>
+                <span className="text-green-600 font-mono">page_layouts</span>
+                <span className="text-xs text-zinc-500">(1:N, CASCADE on delete)</span>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="text-blue-600 font-mono">object_metadata</span>
+                <span className="text-zinc-400">→</span>
+                <span className="text-green-600 font-mono">page_layouts</span>
+                <span className="text-xs text-zinc-500">(1:N, CASCADE on delete)</span>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="text-green-600 font-mono">page_layouts</span>
+                <span className="text-zinc-400">→</span>
+                <span className="text-purple-600 font-mono">page_layout_tabs</span>
+                <span className="text-xs text-zinc-500">(1:N, CASCADE on delete)</span>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="text-purple-600 font-mono">page_layout_tabs</span>
+                <span className="text-zinc-400">→</span>
+                <span className="text-orange-600 font-mono">page_layout_widgets</span>
+                <span className="text-xs text-zinc-500">(1:N, CASCADE on delete)</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white border border-border p-4 rounded-sm mb-8">
+            <h4 className="font-mono font-bold text-sm mb-4">Index Summary</h4>
+            <div className="grid grid-cols-2 gap-4 text-xs">
+              <div>
+                <strong className="font-mono">page_layouts</strong>
+                <ul className="mt-2 space-y-1 text-zinc-600">
+                  <li>• workspace_id (B-tree, partial)</li>
+                  <li>• object_metadata_id (B-tree, partial)</li>
+                  <li>• default lookup (B-tree, composite)</li>
+                </ul>
+              </div>
+              <div>
+                <strong className="font-mono">page_layout_tabs</strong>
+                <ul className="mt-2 space-y-1 text-zinc-600">
+                  <li>• page_layout_id (B-tree, partial)</li>
+                  <li>• position ordering (B-tree, composite)</li>
+                </ul>
+              </div>
+              <div>
+                <strong className="font-mono">page_layout_widgets</strong>
+                <ul className="mt-2 space-y-1 text-zinc-600">
+                  <li>• page_layout_tab_id (B-tree, partial)</li>
+                  <li>• type (B-tree, partial)</li>
+                  <li>• position (B-tree, composite)</li>
+                  <li>• configuration (GIN, JSONB)</li>
+                  <li>• display_condition (GIN, JSONB)</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-green-50 border border-green-200 p-4 rounded-sm">
+            <h4 className="font-mono font-bold text-sm text-green-900 mb-2">✅ Schema Features</h4>
+            <div className="grid grid-cols-2 gap-3 text-xs text-green-800">
+              <div>✓ Multi-tenant isolation (RLS)</div>
+              <div>✓ Soft delete pattern</div>
+              <div>✓ Automatic timestamps</div>
+              <div>✓ Foreign key cascades</div>
+              <div>✓ Check constraints</div>
+              <div>✓ Partial indexes (performance)</div>
+              <div>✓ GIN indexes (JSONB queries)</div>
+              <div>✓ Comprehensive comments</div>
+            </div>
+          </div>
+        </>
+      )
+    },
+
     'backend-services': {
       title: "Complete Backend Implementation",
       content: (
@@ -5123,7 +5756,7 @@ export function PieChart({ data, configuration, onSliceClick }: PieChartProps) {
             </p>
           </div>
 
-          <h3 className="text-lg font-bold text-zinc-900 font-mono mb-4 mt-8">Database Schema (Supabase)</h3>
+          <h3 className="text-lg font-bold text-zinc-900 font-mono mb-4 mt-8">tRPC Router (Complete CRUD)</h3>
 
           <ApiSection
             name="Complete Schema with RLS"
@@ -5650,14 +6283,14 @@ export const pageLayoutRouter = router({
             <Mermaid chart={`graph TB
     subgraph Frontend["🎨 FRONTEND LAYER"]
         subgraph UI["UI Components"]
-            PDR[PageLayoutRenderer<br/>Entry Point]
-            DEC[DashboardEditControls<br/>Edit Mode UI]
-            GLR[GridLayoutRenderer<br/>react-grid-layout]
-            WR[WidgetRenderer<br/>Type Router]
+            PDR[PageLayoutRenderer - Entry Point]
+            DEC[DashboardEditControls - Edit Mode UI]
+            GLR[GridLayoutRenderer - react-grid-layout]
+            WR[WidgetRenderer - Type Router]
 
             subgraph Widgets["15 Widget Types"]
-                WG[GRAPH Widget<br/>5 Chart Types]
-                WV[VIEW Widget<br/>Table Display]
+                WG[GRAPH Widget - 5 Chart Types]
+                WV[VIEW Widget - Table Display]
                 WI[IFRAME Widget]
                 WF[FIELDS Widget]
                 WT[TIMELINE Widget]
@@ -5673,15 +6306,15 @@ export const pageLayoutRouter = router({
             end
 
             subgraph Charts["Chart Components"]
-                BC[BarChart<br/>ResponsiveBar]
-                LC[LineChart<br/>ResponsiveLine]
-                PC[PieChart<br/>ResponsivePie]
-                GC[GaugeChart<br/>RadialBar]
-                AC[AggregateChart<br/>Big Number]
+                BC[BarChart - ResponsiveBar]
+                LC[LineChart - ResponsiveLine]
+                PC[PieChart - ResponsivePie]
+                GC[GaugeChart - RadialBar]
+                AC[AggregateChart - Big Number]
             end
 
             subgraph Settings["Settings UI"]
-                CSM[ChartSettingsModal<br/>Configuration]
+                CSM[ChartSettingsModal - Configuration]
                 WSM[WidgetSettingsModal]
                 FSM[FilterSettingsModal]
                 DSM[DimensionSelector]
@@ -5690,13 +6323,13 @@ export const pageLayoutRouter = router({
         end
 
         subgraph State["State Management (Zustand)"]
-            PLS[PageLayoutStore<br/>Draft/Persisted Pattern]
+            PLS[PageLayoutStore - Draft/Persisted Pattern]
 
             subgraph StoreState["Store State"]
-                PS[persistedLayout<br/>Server State]
-                DS[draftLayout<br/>Edit State]
-                EM[isEditMode<br/>Boolean]
-                UC[hasUnsavedChanges<br/>Boolean]
+                PS[persistedLayout - Server State]
+                DS[draftLayout - Edit State]
+                EM[isEditMode - Boolean]
+                UC[hasUnsavedChanges - Boolean]
             end
 
             subgraph StoreActions["Store Actions"]
@@ -5713,36 +6346,36 @@ export const pageLayoutRouter = router({
         end
 
         subgraph Hooks["Custom Hooks (React Query)"]
-            HPL[usePageLayout<br/>Fetch Layouts]
-            HSP[useSavePageLayout<br/>Bulk Update]
-            HCW[useCreateWidget<br/>Create Widget]
-            HUW[useUpdateWidget<br/>Update Widget]
-            HDW[useDeleteWidget<br/>Delete Widget]
-            HCD[useChartData<br/>Fetch Chart Data]
-            HGWQ[useGraphWidgetQuery<br/>Dynamic Query]
+            HPL[usePageLayout - Fetch Layouts]
+            HSP[useSavePageLayout - Bulk Update]
+            HCW[useCreateWidget - Create Widget]
+            HUW[useUpdateWidget - Update Widget]
+            HDW[useDeleteWidget - Delete Widget]
+            HCD[useChartData - Fetch Chart Data]
+            HGWQ[useGraphWidgetQuery - Dynamic Query]
         end
 
         subgraph Transform["Data Transformation Pipeline"]
-            T1[filterGroupByResults<br/>Range/Null Filter]
-            T2[formatDimensionValue<br/>Date/Currency/Number]
-            T3[computeAggregateValue<br/>Currency Micros/Percentages]
-            T4[fillDateGaps<br/>Temporal Buckets]
-            T5[transformToBarChartData<br/>Nivo Format]
-            T6[transformToLineChartData<br/>Time Series]
-            T7[transformToPieChartData<br/>Percentage Calc]
+            T1[filterGroupByResults - Range/Null Filter]
+            T2[formatDimensionValue - Date/Currency/Number]
+            T3[computeAggregateValue - Currency Micros/Percentages]
+            T4[fillDateGaps - Temporal Buckets]
+            T5[transformToBarChartData - Nivo Format]
+            T6[transformToLineChartData - Time Series]
+            T7[transformToPieChartData - Percentage Calc]
         end
     end
 
     subgraph Backend["⚙️ BACKEND LAYER (Supabase + tRPC)"]
         subgraph API["tRPC API Routes"]
-            PLR[pageLayoutRouter<br/>Main Router]
+            PLR[pageLayoutRouter - Main Router]
 
             subgraph Routes["Routes"]
-                R1[list<br/>Query: Get All Layouts]
-                R2[getById<br/>Query: Get One Layout]
-                R3[create<br/>Mutation: Create Layout]
-                R4[updateWithTabsAndWidgets<br/>Mutation: Bulk Update]
-                R5[delete<br/>Mutation: Soft Delete]
+                R1[list - Query: Get All Layouts]
+                R2[getById - Query: Get One Layout]
+                R3[create - Mutation: Create Layout]
+                R4[updateWithTabsAndWidgets - Mutation: Bulk Update]
+                R5[delete - Mutation: Soft Delete]
             end
 
             subgraph Validation["Zod Schemas"]
@@ -5754,35 +6387,35 @@ export const pageLayoutRouter = router({
         end
 
         subgraph Services["Backend Services"]
-            PLS_SVC[PageLayoutService<br/>CRUD Operations]
-            PUS_SVC[PageLayoutUpdateService<br/>Differential Processing]
-            PWS_SVC[PageLayoutWidgetService<br/>Widget CRUD]
-            PTS_SVC[PageLayoutTabService<br/>Tab CRUD]
+            PLS_SVC[PageLayoutService - CRUD Operations]
+            PUS_SVC[PageLayoutUpdateService - Differential Processing]
+            PWS_SVC[PageLayoutWidgetService - Widget CRUD]
+            PTS_SVC[PageLayoutTabService - Tab CRUD]
 
             subgraph ServiceMethods["Service Methods"]
-                SM1[findMany<br/>List with Filters]
-                SM2[findOne<br/>Single with Relations]
-                SM3[create<br/>Insert with Validation]
-                SM4[update<br/>Atomic Update]
-                SM5[bulkUpdate<br/>Differential Processing]
-                SM6[softDelete<br/>Set deleted_at]
+                SM1[findMany - List with Filters]
+                SM2[findOne - Single with Relations]
+                SM3[create - Insert with Validation]
+                SM4[update - Atomic Update]
+                SM5[bulkUpdate - Differential Processing]
+                SM6[softDelete - Set deleted_at]
             end
         end
 
         subgraph Database["PostgreSQL Database"]
             subgraph Tables["Tables"]
-                T_PL[(page_layouts<br/>Layout Metadata)]
-                T_PT[(page_layout_tabs<br/>Tab Definitions)]
-                T_PW[(page_layout_widgets<br/>Widget Config + Position)]
-                T_WS[(workspaces<br/>Multi-tenancy)]
+                T_PL[(page_layouts - Layout Metadata)]
+                T_PT[(page_layout_tabs - Tab Definitions)]
+                T_PW[(page_layout_widgets - Widget Config + Position)]
+                T_WS[(workspaces - Multi-tenancy)]
             end
 
             subgraph Indexes["Performance Indexes"]
-                I1[idx_workspace<br/>Workspace Filter]
-                I2[idx_object<br/>Object Filter]
-                I3[idx_tab_position<br/>Tab Ordering]
-                I4[idx_widget_type<br/>Widget Type]
-                I5[idx_config_gin<br/>JSONB Search]
+                I1[idx_workspace - Workspace Filter]
+                I2[idx_object - Object Filter]
+                I3[idx_tab_position - Tab Ordering]
+                I4[idx_widget_type - Widget Type]
+                I5[idx_config_gin - JSONB Search]
             end
 
             subgraph RLS["Row-Level Security"]
@@ -5794,19 +6427,19 @@ export const pageLayoutRouter = router({
         end
 
         subgraph EdgeFunctions["Supabase Edge Functions"]
-            EF1[bulkUpdatePageLayout<br/>Transaction Handler]
-            EF2[validateWidgetConfig<br/>Schema Validation]
-            EF3[computeGridLayout<br/>Position Calc]
+            EF1[bulkUpdatePageLayout - Transaction Handler]
+            EF2[validateWidgetConfig - Schema Validation]
+            EF3[computeGridLayout - Position Calc]
         end
     end
 
     subgraph External["🔌 EXTERNAL INTEGRATIONS"]
-        NIVO[Nivo Charts<br/>@nivo/bar, line, pie]
-        RGL[react-grid-layout<br/>Drag & Drop Grid]
-        JSONL[json-logic-js<br/>Conditional Display]
-        ZUSTAND[zustand<br/>State Management]
-        RQ[React Query<br/>Data Fetching]
-        ZOD[Zod<br/>Validation]
+        NIVO[Nivo Charts - @nivo/bar, line, pie]
+        RGL[react-grid-layout - Drag & Drop Grid]
+        JSONL[json-logic-js - Conditional Display]
+        ZUSTAND[zustand - State Management]
+        RQ[React Query - Data Fetching]
+        ZOD[Zod - Validation]
     end
 
     PDR --> PLS
@@ -6002,7 +6635,7 @@ export const pageLayoutRouter = router({
     DB-->>Service: Current state
 
     Service->>Service: Differential Processing
-    Note over Service: Compare existing vs incoming:<br/>- Tabs to create (no id)<br/>- Tabs to update (id exists)<br/>- Tabs to delete (not in incoming)<br/>- Widgets to create/update/delete
+    Note over Service: Compare existing vs incoming: - - Tabs to create (no id) - - Tabs to update (id exists) - - Tabs to delete (not in incoming) - - Widgets to create/update/delete
 
     Service->>DB: BEGIN TRANSACTION
     Service->>DB: UPDATE deleted tabs (set deleted_at)
@@ -6045,7 +6678,7 @@ export const pageLayoutRouter = router({
     tRPC-->>Hook: GroupByResult[]
 
     Hook->>Hook: Transform Pipeline (7 steps)
-    Note over Hook: 1. filterGroupByResults<br/>2. formatDimensionValue<br/>3. computeAggregateValue<br/>4. fillDateGaps<br/>5. transformToBarChartData<br/>6. Apply color scheme<br/>7. Format for Nivo
+    Note over Hook: 1. filterGroupByResults - 2. formatDimensionValue - 3. computeAggregateValue - 4. fillDateGaps - 5. transformToBarChartData - 6. Apply color scheme - 7. Format for Nivo
 
     Hook-->>Chart: BarChartData (Nivo format)
     Chart->>Chart: Render ResponsiveBar
@@ -6066,76 +6699,76 @@ export const pageLayoutRouter = router({
           <h3 className="text-lg font-bold text-zinc-900 font-mono mb-4 mt-8">UI Component Hierarchy</h3>
           <div className="bg-white border border-border p-4 rounded-sm mb-8">
             <Mermaid chart={`graph TD
-    App[App.tsx<br/>Root]
+    App[App.tsx - Root]
 
     subgraph Pages["Pages"]
-        DP[DashboardPage<br/>app/dashboards/[id]/page.tsx]
-        OP[ObjectPage<br/>app/objects/[type]/page.tsx]
+        DP[DashboardPage - app/dashboards/[id]/page.tsx]
+        OP[ObjectPage - app/objects/[type]/page.tsx]
     end
 
     subgraph Layout["Layout Components"]
-        PLR[PageLayoutRenderer<br/>Main Entry Point]
-        DEC[DashboardEditControls<br/>Edit Mode Toolbar]
-        GLR[GridLayoutRenderer<br/>Responsive Grid]
-        VLR[VerticalListRenderer<br/>Stack Layout]
-        CLR[CanvasRenderer<br/>Fullscreen Layout]
+        PLR[PageLayoutRenderer - Main Entry Point]
+        DEC[DashboardEditControls - Edit Mode Toolbar]
+        GLR[GridLayoutRenderer - Responsive Grid]
+        VLR[VerticalListRenderer - Stack Layout]
+        CLR[CanvasRenderer - Fullscreen Layout]
     end
 
     subgraph WidgetSystem["Widget System"]
-        WR[WidgetRenderer<br/>Type Router]
-        WC[WidgetCard<br/>Container with Chrome]
-        WH[WidgetHeader<br/>Title + Actions]
+        WR[WidgetRenderer - Type Router]
+        WC[WidgetCard - Container with Chrome]
+        WH[WidgetHeader - Title + Actions]
 
         subgraph WidgetTypes["Widget Type Components"]
-            GraphW[GraphWidget<br/>Charts]
-            ViewW[ViewWidget<br/>Data Tables]
-            IFrameW[IFrameWidget<br/>Embed]
-            FieldsW[FieldsWidget<br/>Field Display]
-            TimelineW[TimelineWidget<br/>Activity]
-            TasksW[TasksWidget<br/>Task List]
-            NotesW[NotesWidget<br/>Notes Display]
-            FilesW[FilesWidget<br/>File Attachments]
-            EmailsW[EmailsWidget<br/>Email Threads]
-            CalendarW[CalendarWidget<br/>Calendar View]
-            RichTextW[RichTextWidget<br/>WYSIWYG]
-            WorkflowW[WorkflowWidget<br/>Workflow Display]
+            GraphW[GraphWidget - Charts]
+            ViewW[ViewWidget - Data Tables]
+            IFrameW[IFrameWidget - Embed]
+            FieldsW[FieldsWidget - Field Display]
+            TimelineW[TimelineWidget - Activity]
+            TasksW[TasksWidget - Task List]
+            NotesW[NotesWidget - Notes Display]
+            FilesW[FilesWidget - File Attachments]
+            EmailsW[EmailsWidget - Email Threads]
+            CalendarW[CalendarWidget - Calendar View]
+            RichTextW[RichTextWidget - WYSIWYG]
+            WorkflowW[WorkflowWidget - Workflow Display]
         end
     end
 
     subgraph ChartComponents["Chart Components"]
-        BC[BarChart.tsx<br/>ResponsiveBar]
-        LC[LineChart.tsx<br/>ResponsiveLine]
-        PC[PieChart.tsx<br/>ResponsivePie]
-        GC[GaugeChart.tsx<br/>RadialBar]
-        AC[AggregateChart.tsx<br/>Big Number Display]
+        BC[BarChart.tsx - ResponsiveBar]
+        LC[LineChart.tsx - ResponsiveLine]
+        PC[PieChart.tsx - ResponsivePie]
+        GC[GaugeChart.tsx - RadialBar]
+        AC[AggregateChart.tsx - Big Number Display]
 
         subgraph ChartParts["Chart Sub-components"]
-            TL[TotalsLayer<br/>Custom SVG Layer]
-            CHL[CrosshairLayer<br/>Custom SVG Layer]
-            CT[CustomTooltip<br/>Styled Tooltip]
-            CL[CustomLegend<br/>Styled Legend]
+            TL[TotalsLayer - Custom SVG Layer]
+            CHL[CrosshairLayer - Custom SVG Layer]
+            CT[CustomTooltip - Styled Tooltip]
+            CL[CustomLegend - Styled Legend]
         end
     end
 
     subgraph SettingsModals["Settings UI"]
-        CSM[ChartSettingsModal<br/>Main Settings Modal]
-        DTab[DimensionTab<br/>Dimension Config]
-        ATab[AggregateTab<br/>Aggregate Config]
-        FTab[FilterTab<br/>Filter Builder]
-        STab[StyleTab<br/>Color/Label Config]
+        CSM[ChartSettingsModal - Main Settings Modal]
+        DTab[DimensionTab - Dimension Config]
+        ATab[AggregateTab - Aggregate Config]
+        FTab[FilterTab - Filter Builder]
+        STab[StyleTab - Color/Label Config]
 
         subgraph FormComponents["Form Components"]
-            DS[DimensionSelector<br/>Field + Granularity]
-            AS[AggregateSelector<br/>Operation + Field]
-            FS[FilterBuilder<br/>Dynamic Filter UI]
-            CS[ColorSchemeSelector<br/>24 Schemes]
+            DS[DimensionSelector - Field + Granularity]
+            AS[AggregateSelector - Operation + Field]
+            FS[FilterBuilder - Dynamic Filter UI]
+            CS[ColorSchemeSelector - 24 Schemes]
         end
     end
 
     subgraph StateProviders["Context Providers"]
-        PSP[PageLayoutStoreProvider<br/>Zustand Provider]
-        QCP[QueryClientProvider<br/>React Query]
-        TSP[ThemeProvider<br/>CSS Variables]
+        PSP[PageLayoutStoreProvider - Zustand Provider]
+        QCP[QueryClientProvider - React Query]
+        TSP[ThemeProvider - CSS Variables]
     end
 
     App --> DP
@@ -6220,11 +6853,11 @@ export const pageLayoutRouter = router({
         end
 
         subgraph Hooks["hooks/"]
-            H1[usePageLayout.ts<br/>Query Layout]
-            H2[useSavePageLayout.ts<br/>Mutate Layout]
-            H3[useCreateWidget.ts<br/>Create Widget]
-            H4[useChartData.ts<br/>Fetch Chart Data]
-            H5[usePageLayoutStore.ts<br/>Zustand Store]
+            H1[usePageLayout.ts - Query Layout]
+            H2[useSavePageLayout.ts - Mutate Layout]
+            H3[useCreateWidget.ts - Create Widget]
+            H4[useChartData.ts - Fetch Chart Data]
+            H5[usePageLayoutStore.ts - Zustand Store]
         end
 
         subgraph Utils["utils/"]
@@ -6247,22 +6880,22 @@ export const pageLayoutRouter = router({
         end
 
         subgraph Store["store/"]
-            S1[pageLayoutStore.ts<br/>Zustand Store Definition]
+            S1[pageLayoutStore.ts - Zustand Store Definition]
         end
     end
 
     subgraph BackendPackage["Backend (Supabase + tRPC)"]
         subgraph TRPCRouters["server/trpc/routers/"]
-            R1[pageLayout.ts<br/>Main Router]
-            R2[widget.ts<br/>Widget Router]
-            R3[chart.ts<br/>Chart Data Router]
+            R1[pageLayout.ts - Main Router]
+            R2[widget.ts - Widget Router]
+            R3[chart.ts - Chart Data Router]
         end
 
         subgraph Services["server/services/"]
-            SV1[PageLayoutService.ts<br/>CRUD Operations]
-            SV2[PageLayoutUpdateService.ts<br/>Differential Processing]
-            SV3[PageLayoutWidgetService.ts<br/>Widget CRUD]
-            SV4[PageLayoutTabService.ts<br/>Tab CRUD]
+            SV1[PageLayoutService.ts - CRUD Operations]
+            SV2[PageLayoutUpdateService.ts - Differential Processing]
+            SV3[PageLayoutWidgetService.ts - Widget CRUD]
+            SV4[PageLayoutTabService.ts - Tab CRUD]
         end
 
         subgraph Database["supabase/migrations/"]
@@ -6274,23 +6907,23 @@ export const pageLayoutRouter = router({
         end
 
         subgraph EdgeFunctions["supabase/functions/"]
-            EF1[bulk-update-layout/<br/>Transaction Handler]
-            EF2[validate-widget-config/<br/>Schema Validation]
+            EF1[bulk-update-layout/ - Transaction Handler]
+            EF2[validate-widget-config/ - Schema Validation]
         end
 
         subgraph Schemas["server/schemas/"]
-            Z1[pageLayout.schema.ts<br/>Zod Schemas]
-            Z2[widget.schema.ts<br/>Widget Validation]
+            Z1[pageLayout.schema.ts - Zod Schemas]
+            Z2[widget.schema.ts - Widget Validation]
         end
     end
 
     subgraph ExternalLibs["External Libraries"]
-        L1[@nivo/bar<br/>@nivo/line<br/>@nivo/pie]
-        L2[react-grid-layout<br/>Grid System]
-        L3[zustand<br/>State Management]
-        L4[@tanstack/react-query<br/>Data Fetching]
-        L5[zod<br/>Validation]
-        L6[json-logic-js<br/>Conditional Logic]
+        L1[@nivo/bar - @nivo/line - @nivo/pie]
+        L2[react-grid-layout - Grid System]
+        L3[zustand - State Management]
+        L4[@tanstack/react-query - Data Fetching]
+        L5[zod - Validation]
+        L6[json-logic-js - Conditional Logic]
     end
 
     C1 --> H5
@@ -6657,44 +7290,44 @@ export const pageLayoutRouter = router({
     BuildQuery -->|Bar/Line/Pie| GroupByQuery[Build GROUP BY Query]
     BuildQuery -->|Aggregate| AggregateQuery[Build Aggregate Query]
 
-    GroupByQuery --> DBQuery1[Execute: SELECT field, aggregate FROM table<br/>WHERE filters GROUP BY field]
-    AggregateQuery --> DBQuery2[Execute: SELECT aggregate FROM table<br/>WHERE filters]
+    GroupByQuery --> DBQuery1[Execute: SELECT field, aggregate FROM table - WHERE filters GROUP BY field]
+    AggregateQuery --> DBQuery2[Execute: SELECT aggregate FROM table - WHERE filters]
 
-    DBQuery1 --> RawResults[Raw Results:<br/>GroupByResult[]]
-    DBQuery2 --> RawAgg[Raw Aggregate:<br/>number]
+    DBQuery1 --> RawResults[Raw Results: - GroupByResult[]]
+    DBQuery2 --> RawAgg[Raw Aggregate: - number]
 
-    RawResults --> Step1[Step 1: filterGroupByResults<br/>Filter by range/null]
+    RawResults --> Step1[Step 1: filterGroupByResults - Filter by range/null]
 
-    Step1 --> Step2[Step 2: formatDimensionValue<br/>Format dates, currency, numbers]
+    Step1 --> Step2[Step 2: formatDimensionValue - Format dates, currency, numbers]
 
-    Step2 --> Step3[Step 3: computeAggregateValue<br/>Handle currency micros, percentages]
+    Step2 --> Step3[Step 3: computeAggregateValue - Handle currency micros, percentages]
 
     Step3 --> Step4{Is Date Dimension?}
 
-    Step4 -->|Yes| FillGaps[Step 4: fillDateGaps<br/>Fill missing temporal buckets]
+    Step4 -->|Yes| FillGaps[Step 4: fillDateGaps - Fill missing temporal buckets]
     Step4 -->|No| Skip4[Skip gap filling]
 
     FillGaps --> Step5{Chart Type?}
     Skip4 --> Step5
 
-    Step5 -->|Bar| TransformBar[Step 5a: transformToBarChartData<br/>Create BarDatum[] with keys]
-    Step5 -->|Line| TransformLine[Step 5b: transformToLineChartData<br/>Create LineSeries[] with points]
-    Step5 -->|Pie| TransformPie[Step 5c: transformToPieChartData<br/>Calculate percentages]
+    Step5 -->|Bar| TransformBar[Step 5a: transformToBarChartData - Create BarDatum[] with keys]
+    Step5 -->|Line| TransformLine[Step 5b: transformToLineChartData - Create LineSeries[] with points]
+    Step5 -->|Pie| TransformPie[Step 5c: transformToPieChartData - Calculate percentages]
 
-    TransformBar --> ApplyColor1[Step 6: Apply Color Scheme<br/>Map colors from COLOR_SCHEMES]
+    TransformBar --> ApplyColor1[Step 6: Apply Color Scheme - Map colors from COLOR_SCHEMES]
     TransformLine --> ApplyColor2[Step 6: Apply Color Scheme]
     TransformPie --> ApplyColor3[Step 6: Apply Color Scheme]
 
-    ApplyColor1 --> NivoFormat1[Step 7: Format for Nivo<br/>Final BarChartData structure]
-    ApplyColor2 --> NivoFormat2[Step 7: Format for Nivo<br/>Final LineChartData structure]
-    ApplyColor3 --> NivoFormat3[Step 7: Format for Nivo<br/>Final PieChartData structure]
+    ApplyColor1 --> NivoFormat1[Step 7: Format for Nivo - Final BarChartData structure]
+    ApplyColor2 --> NivoFormat2[Step 7: Format for Nivo - Final LineChartData structure]
+    ApplyColor3 --> NivoFormat3[Step 7: Format for Nivo - Final PieChartData structure]
 
-    NivoFormat1 --> RenderBar[Render ResponsiveBar<br/>+ Custom Totals Layer<br/>+ Custom Tooltip]
-    NivoFormat2 --> RenderLine[Render ResponsiveLine<br/>+ Custom Crosshair Layer<br/>+ Custom Tooltip]
-    NivoFormat3 --> RenderPie[Render ResponsivePie<br/>+ Arc Labels (percentages)<br/>+ Custom Tooltip]
+    NivoFormat1 --> RenderBar[Render ResponsiveBar - + Custom Totals Layer - + Custom Tooltip]
+    NivoFormat2 --> RenderLine[Render ResponsiveLine - + Custom Crosshair Layer - + Custom Tooltip]
+    NivoFormat3 --> RenderPie[Render ResponsivePie - + Arc Labels (percentages) - + Custom Tooltip]
 
-    RawAgg --> FormatAgg[formatChartAggregateValue<br/>Currency, number formatting]
-    FormatAgg --> RenderAgg[Render AggregateChart<br/>Big number + trend indicator]
+    RawAgg --> FormatAgg[formatChartAggregateValue - Currency, number formatting]
+    FormatAgg --> RenderAgg[Render AggregateChart - Big number + trend indicator]
 
     RenderBar --> Display[Display Interactive Chart]
     RenderLine --> Display
@@ -6703,8 +7336,8 @@ export const pageLayoutRouter = router({
 
     Display --> UserInteract{User Interaction?}
 
-    UserInteract -->|Click bar/point/slice| Drilldown[Extract clicked value<br/>Build filter query params<br/>Navigate to record list]
-    UserInteract -->|Hover| ShowTooltip[Show custom tooltip<br/>with formatted values]
+    UserInteract -->|Click bar/point/slice| Drilldown[Extract clicked value - Build filter query params - Navigate to record list]
+    UserInteract -->|Hover| ShowTooltip[Show custom tooltip - with formatted values]
     UserInteract -->|None| End([Chart Displayed])
 
     Drilldown --> End
@@ -6734,52 +7367,52 @@ export const pageLayoutRouter = router({
           <div className="bg-white border border-border p-4 rounded-sm mb-8">
             <Mermaid chart={`graph TB
     subgraph Core["Core Dependencies"]
-        React[react: ^19.2.0<br/>UI Framework]
-        ReactDOM[react-dom: ^19.2.0<br/>DOM Rendering]
-        TS[typescript: ~5.8.2<br/>Type Safety]
+        React[react: ^19.2.0 - UI Framework]
+        ReactDOM[react-dom: ^19.2.0 - DOM Rendering]
+        TS[typescript: ~5.8.2 - Type Safety]
     end
 
     subgraph StateData["State & Data Management"]
-        Zustand[zustand: ^5.0.2<br/>State Management]
-        ReactQuery[@tanstack/react-query: ^5.59.0<br/>Server State & Caching]
-        Immer[immer: ^10.1.1<br/>Immutable Updates]
+        Zustand[zustand: ^5.0.2 - State Management]
+        ReactQuery[@tanstack/react-query: ^5.59.0 - Server State & Caching]
+        Immer[immer: ^10.1.1 - Immutable Updates]
     end
 
     subgraph API["API & Validation"]
-        tRPC[@trpc/client: ^11.0.0<br/>Type-safe API Client]
-        tRPCReact[@trpc/react-query: ^11.0.0<br/>React Query Integration]
-        Zod[zod: ^3.24.1<br/>Schema Validation]
+        tRPC[@trpc/client: ^11.0.0 - Type-safe API Client]
+        tRPCReact[@trpc/react-query: ^11.0.0 - React Query Integration]
+        Zod[zod: ^3.24.1 - Schema Validation]
     end
 
     subgraph Charts["Chart Libraries"]
-        NivoCore[@nivo/core: ^0.87.0<br/>Nivo Core]
-        NivoBar[@nivo/bar: ^0.87.0<br/>Bar Charts]
-        NivoLine[@nivo/line: ^0.87.0<br/>Line Charts]
-        NivoPie[@nivo/pie: ^0.87.0<br/>Pie Charts]
-        NivoRadial[@nivo/radial-bar: ^0.87.0<br/>Gauge Charts]
+        NivoCore[@nivo/core: ^0.87.0 - Nivo Core]
+        NivoBar[@nivo/bar: ^0.87.0 - Bar Charts]
+        NivoLine[@nivo/line: ^0.87.0 - Line Charts]
+        NivoPie[@nivo/pie: ^0.87.0 - Pie Charts]
+        NivoRadial[@nivo/radial-bar: ^0.87.0 - Gauge Charts]
     end
 
     subgraph Layout["Layout & Grid"]
-        RGL[react-grid-layout: ^1.5.0<br/>Drag & Drop Grid]
-        RGLTypes[@types/react-grid-layout: ^1.3.5<br/>TypeScript Types]
+        RGL[react-grid-layout: ^1.5.0 - Drag & Drop Grid]
+        RGLTypes[@types/react-grid-layout: ^1.3.5 - TypeScript Types]
     end
 
     subgraph Utils["Utility Libraries"]
-        DateFns[date-fns: ^4.1.0<br/>Date Utilities]
-        JSONLogic[json-logic-js: ^2.0.5<br/>Conditional Logic]
-        Lodash[lodash: ^4.17.21<br/>Utility Functions]
+        DateFns[date-fns: ^4.1.0 - Date Utilities]
+        JSONLogic[json-logic-js: ^2.0.5 - Conditional Logic]
+        Lodash[lodash: ^4.17.21 - Utility Functions]
     end
 
     subgraph Backend["Backend (Supabase)"]
-        Supabase[@supabase/supabase-js: ^2.47.10<br/>Supabase Client]
-        PostgreSQL[PostgreSQL: 15+<br/>Database]
-        PostgREST[PostgREST<br/>Auto-generated REST API]
+        Supabase[@supabase/supabase-js: ^2.47.10 - Supabase Client]
+        PostgreSQL[PostgreSQL: 15+ - Database]
+        PostgREST[PostgREST - Auto-generated REST API]
     end
 
     subgraph DevTools["Development Tools"]
-        Vite[vite: ^6.2.0<br/>Build Tool]
-        ESLint[eslint: ^9.18.0<br/>Linting]
-        Prettier[prettier: ^3.4.2<br/>Code Formatting]
+        Vite[vite: ^6.2.0 - Build Tool]
+        ESLint[eslint: ^9.18.0 - Linting]
+        Prettier[prettier: ^3.4.2 - Code Formatting]
     end
 
     React --> ReactDOM

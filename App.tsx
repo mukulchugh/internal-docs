@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import {
   Menu, X, Box, Layers, Database, Code, Palette,
   Layout, Cpu, GitBranch, Terminal,
-  ChevronRight, Search, FileText, Activity, AlertCircle, CheckCircle2
+  ChevronRight, Search, FileText, Activity, AlertCircle, CheckCircle2, BarChart3
 } from 'lucide-react';
 import { DocStatus, PackageMeta, PackageDocs } from './types';
 import { PACKAGES, DOCS_MAP } from './data/content';
@@ -260,29 +260,46 @@ export default function App() {
           {DOCS_MAP[activePkgId] && (
             <div className="mt-8 pt-6 border-t border-border">
               <NavSection title="Table of Contents">
-                {[
-                  { id: 'overview', label: 'Overview', icon: Layout },
-                  { id: 'architecture', label: 'Architecture', icon: Cpu },
-                  { id: 'api', label: 'API Reference', icon: Terminal },
-                  { id: 'hooks', label: 'Hooks Reference', icon: Code },
-                  { id: 'state', label: 'State Management', icon: Database },
-                  { id: 'features', label: 'Advanced Features', icon: Layers },
-                  { id: 'styles', label: 'UI & Styles', icon: Palette },
-                ].map(item => (
-                  <button 
-                    key={item.id}
-                    onClick={() => setActiveTab(item.id as keyof PackageDocs)}
-                    className={`
-                      w-full flex items-center gap-3 px-3 py-2 rounded-sm text-sm transition-all duration-200
-                      ${activeTab === item.id 
-                        ? 'text-zinc-900 font-bold bg-zinc-200/50' 
-                        : 'text-zinc-500 hover:text-zinc-900'}
-                    `}
-                  >
-                    <item.icon size={14} />
-                    <span>{item.label}</span>
-                  </button>
-                ))}
+                {Object.entries(DOCS_MAP[activePkgId]).map(([sectionKey, section]) => {
+                  // Map section keys to icons and labels
+                  const getSectionMeta = (key: string) => {
+                    const metaMap: Record<string, { label: string; icon: any }> = {
+                      'overview': { label: 'Overview', icon: Layout },
+                      'architecture': { label: 'Architecture', icon: Cpu },
+                      'api': { label: 'API Reference', icon: Terminal },
+                      'hooks': { label: 'Hooks Reference', icon: Code },
+                      'state': { label: 'State Management', icon: Database },
+                      'features': { label: 'Advanced Features', icon: Layers },
+                      'styles': { label: 'UI & Styles', icon: Palette },
+                      'nivo-charts': { label: 'Nivo Chart Implementations', icon: BarChart3 },
+                      'database-schema': { label: 'Database Schema', icon: Database },
+                      'backend-services': { label: 'Backend Services', icon: GitBranch },
+                      'visual-architecture': { label: 'Visual Architecture', icon: Layers },
+                      'real-world-examples': { label: 'Real-World Examples', icon: Code },
+                      'plan': { label: 'Implementation Plan', icon: GitBranch },
+                    };
+                    return metaMap[key] || { label: section.title, icon: FileText };
+                  };
+
+                  const meta = getSectionMeta(sectionKey);
+                  const SectionIcon = meta.icon;
+
+                  return (
+                    <button
+                      key={sectionKey}
+                      onClick={() => setActiveTab(sectionKey as keyof PackageDocs)}
+                      className={`
+                        w-full flex items-center gap-3 px-3 py-2 rounded-sm text-sm transition-all duration-200
+                        ${activeTab === sectionKey
+                          ? 'text-zinc-900 font-bold bg-zinc-200/50'
+                          : 'text-zinc-500 hover:text-zinc-900'}
+                      `}
+                    >
+                      <SectionIcon size={14} />
+                      <span>{meta.label}</span>
+                    </button>
+                  );
+                })}
               </NavSection>
             </div>
           )}
