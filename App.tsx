@@ -13,7 +13,7 @@ const StatusBadge = ({ status }: { status: DocStatus }) => {
   const styles = {
     prod: "bg-emerald-100 text-emerald-800 border-emerald-200",
     proposed: "bg-amber-100 text-amber-800 border-amber-200",
-    deprecated: "bg-red-100 text-red-800 border-red-200"
+    deprecated: "bg-zinc-100 text-zinc-500 border-zinc-200"
   };
 
   return (
@@ -154,14 +154,14 @@ export default function App() {
 
           <NavSection title="Proposed / RFC">
             {proposedPackages.map(pkg => (
-               <SidebarItem 
+               <SidebarItem
                  key={pkg.id}
-                 active={activePkgId === pkg.id} 
+                 active={activePkgId === pkg.id}
                  pkg={pkg}
                  onClick={() => {
                    setActivePkgId(pkg.id);
                    setMobileMenuOpen(false);
-                 }} 
+                 }}
                />
              ))}
           </NavSection>
